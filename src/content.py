@@ -80,7 +80,7 @@ def generate_post(pillar: str | None = None) -> dict:
     prompt = PILLAR_PROMPTS[pillar]
 
     response = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[
             {"role": "system", "content": (
                 "You are a social media manager for David Web Solution, a web development agency "
