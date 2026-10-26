@@ -8,6 +8,20 @@ from groq import Groq
 
 client = Groq(api_key=os.environ["GROQ_API_KEY"])
 
+# Current world trends injected into prompts to keep content fresh
+WORLD_TRENDS = [
+    "AI automation tools replacing manual agency work in 2025",
+    "Google's AI Overviews changing SEO strategy for small businesses",
+    "Short-form video dominating B2B marketing (LinkedIn Reels, IG Reels)",
+    "Local SEO surge as more consumers search 'near me' on mobile",
+    "No-code/low-code WordPress tools empowering non-tech business owners",
+    "AI UGC ads outperforming traditional video ads by 3x on Meta",
+    "Core Web Vitals 2025 update impacting Google search rankings",
+    "WhatsApp Business API becoming key lead gen tool for agencies",
+    "Voice search SEO growing with smart home device adoption",
+    "Shopify vs WooCommerce debate heating up for UK/US e-commerce",
+]
+
 # Content pillars with weights (higher = posted more often)
 CONTENT_PILLARS = [
     ("wordpress_tip",      25),
@@ -78,6 +92,8 @@ def generate_post(pillar: str | None = None) -> dict:
         pillar = pick_pillar()
 
     prompt = PILLAR_PROMPTS[pillar]
+    trend  = random.choice(WORLD_TRENDS)
+    prompt = f"[Current world trend to reference naturally if relevant: {trend}]\n\n{prompt}"
 
     response = client.chat.completions.create(
         model="openai/gpt-oss-20b",
