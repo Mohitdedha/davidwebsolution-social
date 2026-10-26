@@ -1,6 +1,6 @@
 """
 Image fetcher for David Web Solution posts.
-Uses Pexels (preferred) → Unsplash → None if no key available.
+Uses Pexels → Unsplash → Picsum (no key needed, always works) → None.
 """
 import os
 import re
@@ -78,6 +78,18 @@ def _placeholder_url(pillar: str, text: str) -> str:
     return f"https://placehold.co/1080x1080/{color}/ffffff/png?text={safe}"
 
 
+def _fetch_picsum() -> bytes | None:
+    """Fetch a random square image from picsum.photos — no key needed."""
+    try:
+        seed = random.randint(1, 1000)
+        r = requests.get(f"https://picsum.photos/seed/{seed}/1080/1080", timeout=20)
+        if r.status_code == 200:
+            return r.content
+    except Exception as e:
+        print(f"[IMAGE] Picsum error: {e}")
+    return None
+
+
 def get_image(pillar: str, post_text: str) -> bytes | None:
     """Return image bytes for the post, or None if unavailable."""
     queries = PILLAR_QUERIES.get(pillar, ["web development agency"])
@@ -93,7 +105,12 @@ def get_image(pillar: str, post_text: str) -> bytes | None:
         print(f"[IMAGE] Fetched from Unsplash: {query}")
         return img
 
-    print(f"[IMAGE] Using placeholder for pillar: {pillar}")
+    img = _fetch_picsum()
+    if img:
+        print(f"[IMAGE] Fetched from Picsum (no-key fallback)")
+        return img
+
+    print(f"[IMAGE] No image available for pillar: {pillar}")
     return None  # social.py will skip image if None
 
 
