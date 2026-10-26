@@ -35,6 +35,7 @@ jobs:
           DWS_FB_PAGE_ID:      ${{ secrets.DWS_FB_PAGE_ID }}
           DWS_FB_PAGE_TOKEN:   ${{ secrets.DWS_FB_PAGE_TOKEN }}
           DWS_IG_ACCOUNT_ID:   ${{ secrets.DWS_IG_ACCOUNT_ID }}
+          PEXELS_API_KEY:       ${{ secrets.PEXELS_API_KEY }}
           UNSPLASH_ACCESS_KEY: ${{ secrets.UNSPLASH_ACCESS_KEY }}
           IMGBB_API_KEY:       ${{ secrets.IMGBB_API_KEY }}
           POSTS_PER_RUN:       "1"

@@ -1,12 +1,13 @@
 """
 Image fetcher for David Web Solution posts.
-Uses Unsplash (free) or falls back to a branded placeholder uploaded to ImgBB.
+Uses Pexels (preferred) → Unsplash → None if no key available.
 """
 import os
 import re
 import requests
 import random
 
+PEXELS_KEY   = os.environ.get("PEXELS_API_KEY", "")
 UNSPLASH_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 IMGBB_KEY    = os.environ.get("IMGBB_API_KEY", "")
 
@@ -29,6 +30,27 @@ FALLBACK_COLORS = {
     "tool_spotlight":   "d97706",
     "industry_insight": "1e40af",
 }
+
+
+def _fetch_pexels(query: str) -> bytes | None:
+    if not PEXELS_KEY:
+        return None
+    try:
+        r = requests.get(
+            "https://api.pexels.com/v1/search",
+            params={"query": query, "per_page": 10, "orientation": "square"},
+            headers={"Authorization": PEXELS_KEY},
+            timeout=15,
+        )
+        if r.status_code == 200:
+            photos = r.json().get("photos", [])
+            if photos:
+                url = random.choice(photos)["src"]["large"]
+                img = requests.get(url, timeout=20)
+                return img.content
+    except Exception as e:
+        print(f"[IMAGE] Pexels error: {e}")
+    return None
 
 
 def _fetch_unsplash(query: str) -> bytes | None:
@@ -60,6 +82,11 @@ def get_image(pillar: str, post_text: str) -> bytes | None:
     """Return image bytes for the post, or None if unavailable."""
     queries = PILLAR_QUERIES.get(pillar, ["web development agency"])
     query = random.choice(queries)
+
+    img = _fetch_pexels(query)
+    if img:
+        print(f"[IMAGE] Fetched from Pexels: {query}")
+        return img
 
     img = _fetch_unsplash(query)
     if img:
