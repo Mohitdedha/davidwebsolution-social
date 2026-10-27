@@ -566,361 +566,452 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="PRO TIP"):
     return img
 
 
+# ───────────────────────────────────────────────────────────────────────────────
+# Shared helpers for premium templates
+# ───────────────────────────────────────────────────────────────────────────────
+
+def _ov(img, x0, y0, x1, y1, col, a):
+    ov = Image.new("RGBA", img.size, (0,0,0,0))
+    ImageDraw.Draw(ov).rectangle([x0,y0,x1,y1], fill=(*col,a))
+    return Image.alpha_composite(img.convert("RGBA"), ov).convert("RGB")
+
+def _gv(img, x0, y0, x1, y1, c1, c2):
+    draw = ImageDraw.Draw(img)
+    n = y1-y0
+    for i in range(n):
+        t = i/max(n-1,1)
+        c = tuple(int(c1[j]+t*(c2[j]-c1[j])) for j in range(3))
+        draw.line([(x0,y0+i),(x1,y0+i)], fill=c)
+
+def _gh(img, x0, y0, x1, y1, c1, c2):
+    draw = ImageDraw.Draw(img)
+    n = x1-x0
+    for i in range(n):
+        t = i/max(n-1,1)
+        c = tuple(int(c1[j]+t*(c2[j]-c1[j])) for j in range(3))
+        draw.line([(x0+i,y0),(x0+i,y1)], fill=c)
+
+def _hdr(img, color, logo_white=True):
+    """Draw premium top header bar with logo."""
+    W, H = img.size
+    HH   = 88
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([0,0,W,HH], fill=(6,8,22))
+    draw.rectangle([0,HH-3,W,HH], fill=color)   # color bottom rule
+    draw.rectangle([0,0,6,HH], fill=color)       # left accent bar
+    img  = _paste_logo(img, 66, (HH-52)//2, white=logo_white)
+    draw = ImageDraw.Draw(img)
+    tf   = _font(19, False)
+    tw   = draw.textbbox((0,0), BRAND_TAG, font=tf)[2]
+    draw.text((W-62-tw, (HH-20)//2), BRAND_TAG, font=tf, fill=(140,165,220))
+    return img, draw, HH
+
+def _footer(img, draw, cta, color):
+    """Draw premium CTA footer."""
+    W, H = img.size
+    FH   = 120
+    FY   = H - FH
+    _gv(img, 0, FY, W, H, (6,8,22), (10,12,32))
+    draw = ImageDraw.Draw(img)
+    draw.rectangle([0, FY, W, FY+3], fill=color)
+    # CTA button centered
+    bf  = _font(25)
+    bw_ = draw.textbbox((0,0),cta,font=bf)[2]+70
+    bh_ = 58
+    bx_ = (W-bw_)//2
+    by_ = FY + (FH-bh_)//2 - 6
+    _rr(draw, [bx_,by_,bx_+bw_,by_+bh_], 29, color)
+    tw_ = draw.textbbox((0,0),cta,font=bf)[2]
+    th_ = draw.textbbox((0,0),cta,font=bf)[3]
+    draw.text((bx_+(bw_-tw_)//2, by_+(bh_-th_)//2-1), cta, font=bf, fill=(255,255,255))
+    # website + phone
+    wf   = _font(18,False)
+    info = f"{BRAND_WEB}   |   {BRAND_PHONE}"
+    iw   = draw.textbbox((0,0),info,font=wf)[2]
+    draw.text(((W-iw)//2, by_+bh_+10), info, font=wf, fill=(120,145,200))
+    return FY
+
 # ═══════════════════════════════════════════════════════════════════════════════
-# Template 3 — BOLD REVEAL (portrait 1080x1350)
-# Dark hero + orange accents + 2x2 service cards grid + orange CTA band
+# Template 3 — BOLD REVEAL v2
+# Premium layout: diagonal photo strip + large headline + service tag row + stats
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _tpl_bold_reveal(hl, bullets, cta, color, photo=None, intro_label="WE OFFER"):
-    W, H   = SIZE, HEIGHT
-    DARK   = (12,  14,  30)
-    DARKER = ( 6,   8,  18)
-    WHITE  = (255, 255, 255)
-    MUTED  = (160, 178, 220)
-    LIGHT  = (240, 243, 255)
-    PAD    = 52
+    """
+    Premium layout:
+    ┌────────────────────────────────┐
+    │ HEADER (logo + tag)            │ 88px
+    ├────────────────────────────────┤
+    │ HERO: full-width photo/gradient│ 480px
+    │   large BIG NUMBER + headline  │
+    │   pill label, tagline          │
+    ├────────────────────────────────┤
+    │ FEATURE ROW (3 chips)          │ 72px
+    ├────────────────────────────────┤
+    │ SERVICES LIST (4 rows)         │ 470px
+    ├────────────────────────────────┤
+    │ FOOTER (CTA + web/phone)       │ 120px
+    └────────────────────────────────┘
+    """
+    W, H = SIZE, HEIGHT
+    NAVY = ( 6,  8, 22)
+    DARK = (12, 15, 38)
+    MID  = (18, 22, 56)
+    WHITE= (255,255,255)
+    MUTED= (145,168,225)
+    PAD  = 62
 
-    img  = Image.new("RGB", (W, H), DARK)
+    img = Image.new("RGB", (W, H), NAVY)
+    _gv(img, 0, 0, W, H, DARK, NAVY)   # subtle base gradient
+
+    # ── Header ────────────────────────────────────────────────────────────────
+    img, draw, HH = _hdr(img, color)
+
+    # ── Hero zone ─────────────────────────────────────────────────────────────
+    HZ_Y, HZ_H = HH, 480
+    _gv(img, 0, HZ_Y, W, HZ_Y+HZ_H, (0,36,130), (6,8,22))
     draw = ImageDraw.Draw(img)
 
-    # Header band
-    HH = 90
-    draw.rectangle([0, 0, W, HH], fill=DARKER)
-    draw.rectangle([0, 0, 5, HH], fill=color)
-    img  = _paste_logo(img, PAD, (HH-52)//2, white=True)
-    draw = ImageDraw.Draw(img)
-    tf   = _font(20, False)
-    tw   = draw.textbbox((0,0), BRAND_TAG, font=tf)[2]
-    draw.text((W-PAD-tw, (HH-22)//2), BRAND_TAG, font=tf, fill=MUTED)
+    # Photo composite (right side) if available
+    if photo:
+        PH_W, PH_H = 420, HZ_H
+        ph = _enhance_photo(_fit_photo(photo, PH_W, PH_H), brightness=0.7, contrast=1.2)
+        img.paste(ph, (W-PH_W, HZ_Y))
+        draw = ImageDraw.Draw(img)
+        # Gradient mask: dark from left → transparent right
+        _gh(img, W-PH_W, HZ_Y, W-PH_W+200, HZ_Y+HZ_H, DARK, (0,0,0))
+        img = _ov(img, W-PH_W, HZ_Y, W, HZ_Y+HZ_H, (0,36,130), 120)
+        draw = ImageDraw.Draw(img)
 
-    # Hero strip: gradient bg
-    HERO_Y, HERO_H = HH, 330
-    for i in range(HERO_H):
-        t = i/max(HERO_H-1,1)
-        c = tuple(int((16,18,42)[j]+t*((8,12,38)[j]-(16,18,42)[j])) for j in range(3))
-        draw.line([(0,HERO_Y+i),(W,HERO_Y+i)], fill=c)
-    # Diagonal accent stripes top-right
-    for i in range(0,220,14):
-        draw.line([(W-i,HERO_Y),(W,HERO_Y+i)], fill=(*color,50), width=2)
+    # Large decorative circle (top-right, brand accent)
+    draw.ellipse([W-260, HZ_Y-60, W+60, HZ_Y+220],
+                 outline=(*color, 35), width=3)
+    draw.ellipse([W-200, HZ_Y-10, W+10, HZ_Y+170],
+                 outline=(*color, 20), width=1)
 
-    y = HERO_Y + 30
-    # Service label pill
-    pf   = _font(17)
-    pt   = intro_label
-    pw_  = draw.textbbox((0,0), pt, font=pf)[2] + 32
-    _rr(draw, [PAD, y, PAD+pw_, y+34], 17, color)
-    draw.text((PAD+16, y+7), pt, font=pf, fill=WHITE)
-    y += 52
+    y = HZ_Y + 38
 
-    # 3-line headline (font 74 — slightly smaller so it fits cleanly)
-    fh = _font(74)
-    words = hl.split()
-    lines_hl = [words[i:i+2] for i in range(0,min(6,len(words)),2)] or [[hl]]
-    colors_hl = [WHITE, color, WHITE]
-    for idx, wds in enumerate(lines_hl[:3]):
-        txt = " ".join(wds)
-        draw.text((PAD, y), txt, font=fh, fill=colors_hl[idx % 3])
-        y += draw.textbbox((0,0), txt, font=fh)[3] + 3
-    y += 10
+    # Pill label
+    pf  = _font(16)
+    pw_ = draw.textbbox((0,0),intro_label,font=pf)[2]+28
+    _rr(draw, [PAD, y, PAD+pw_, y+32], 16, color)
+    draw.text((PAD+14,y+7), intro_label, font=pf, fill=WHITE)
+    y += 50
 
-    # Subtext
-    fs = _font(22, False)
-    sub = "We Help To Grow Your Business"
-    for sl in _wrap(sub, fs, W-PAD*2, draw, 2):
+    # Mega headline — 2 lines, word-wrapped, mixed color
+    fh   = _font(90)
+    fh2  = _font(90)
+    words = hl.upper().split()
+    # Line 1: first 2 words — white
+    l1 = " ".join(words[:2])
+    draw.text((PAD, y), l1, font=fh, fill=WHITE)
+    y += draw.textbbox((0,0),l1,font=fh)[3] + 2
+    # Line 2: remaining — brand color
+    l2 = " ".join(words[2:4]) if len(words)>2 else ""
+    if l2:
+        draw.text((PAD, y), l2, font=fh2, fill=color)
+        y += draw.textbbox((0,0),l2,font=fh2)[3] + 2
+    y += 12
+
+    # Accent rule (2-tone)
+    draw.rectangle([PAD, y, PAD+80, y+5], fill=color)
+    draw.rectangle([PAD+86, y, PAD+116, y+5], fill=(1,146,239))
+    y += 20
+
+    # Tagline
+    fs = _font(24, False)
+    for sl in _wrap("Full-Service Digital Agency — Real Results, No Fluff", fs, W-PAD*2-20, draw, 2):
         draw.text((PAD, y), sl, font=fs, fill=MUTED)
-        y += 30
+        y += 32
 
-    # Divider
-    DIV_Y = HERO_Y + HERO_H
-    draw.rectangle([0, DIV_Y, W, DIV_Y+6], fill=color)
-    draw.rectangle([0, DIV_Y+6, W, DIV_Y+8], fill=DARKER)
+    # ── Feature chip row ──────────────────────────────────────────────────────
+    FR_Y = HZ_Y + HZ_H
+    draw.rectangle([0, FR_Y, W, FR_Y+70], fill=color)
+    chips = bullets[:3]
+    chip_x = PAD
+    cf = _font(17)
+    for chip in chips:
+        cw_ = draw.textbbox((0,0),chip[:22],font=cf)[2]+30
+        _rr(draw, [chip_x, FR_Y+16, chip_x+cw_, FR_Y+54], 19, (0,0,0))
+        draw.text((chip_x+15, FR_Y+24), chip[:22], font=cf, fill=WHITE)
+        chip_x += cw_ + 14
+        if chip_x > W-PAD: break
 
-    # Services grid 2x2 — height exactly fits 2 rows + header
-    CARD_W = (W-PAD*2-20)//2
-    CARD_H = 168
-    CARD_GAP = 18
-    GRID_HDR = 58   # "Our Services" header
-    GRID_H   = GRID_HDR + 2*(CARD_H+CARD_GAP) + 10
-    GRID_Y   = DIV_Y + 8
-    draw.rectangle([0, GRID_Y, W, GRID_Y+GRID_H], fill=DARK)
-    gy = GRID_Y + 22
-    fsh = _font(27)
-    draw.text((PAD, gy), "Our Services", font=fsh, fill=WHITE)
-    uw_ = draw.textbbox((0,0),"Our Services",font=fsh)[2]
-    draw.rectangle([PAD, gy+33, PAD+uw_, gy+37], fill=color)
-    gy += GRID_HDR
+    # ── Service list ──────────────────────────────────────────────────────────
+    SL_Y = FR_Y + 70
+    SL_H = H - SL_Y - 120
+    draw.rectangle([0, SL_Y, W, SL_Y+SL_H], fill=DARK)
 
-    for idx, bul in enumerate(bullets[:4]):
-        col_i = idx%2; row_i = idx//2
-        cx = PAD + col_i*(CARD_W+20)
-        cy = gy + row_i*(CARD_H+CARD_GAP)
-        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 16, (18,20,46))
-        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 16, None, color, 2)
-        fn  = _font(38)
-        num = f"0{idx+1}"
-        draw.text((cx+18, cy+14), num, font=fn, fill=color)
-        fn2 = _font(20, False)
-        nlines = _wrap(bul, fn2, CARD_W-38, draw, 2)
-        ny = cy+62
-        for nl in nlines:
-            draw.text((cx+18, ny), nl, font=fn2, fill=WHITE); ny+=27
-        draw.rectangle([cx+18, cy+CARD_H-12, cx+52, cy+CARD_H-8], fill=color)
+    svcs = [
+        ("01", bullets[0] if len(bullets)>0 else "Website Design & Dev"),
+        ("02", bullets[1] if len(bullets)>1 else "SEO & Google Ranking"),
+        ("03", bullets[2] if len(bullets)>2 else "UGC & AI Video Ads"),
+        ("04", bullets[3] if len(bullets)>3 else "eCommerce Solutions"),
+    ]
+    row_h = SL_H // 4
+    for idx, (num, svc) in enumerate(svcs):
+        ry = SL_Y + idx * row_h
+        # Alternating subtle bg
+        if idx % 2 == 1:
+            draw.rectangle([0, ry, W, ry+row_h], fill=MID)
+        # Left color bar
+        bar_c = color if idx % 2 == 0 else (1,146,239)
+        draw.rectangle([0, ry+8, 6, ry+row_h-8], fill=bar_c)
+        # Number
+        fn  = _font(34)
+        draw.text((PAD, ry+(row_h-36)//2), num, font=fn, fill=bar_c)
+        nw_ = draw.textbbox((0,0),num,font=fn)[2]
+        # Service text
+        ft  = _font(26)
+        fd  = _font(19,False)
+        draw.text((PAD+nw_+20, ry+(row_h-30)//2-2), svc[:38], font=ft, fill=WHITE)
+        # Arrow hint
+        draw.text((W-PAD-20, ry+(row_h-22)//2), ">", font=fd, fill=bar_c)
+        # Thin divider
+        if idx < 3:
+            draw.rectangle([PAD, ry+row_h-1, W-PAD, ry+row_h], fill=(30,35,70))
 
-    # CTA band — fills remaining space
-    CTA_Y = GRID_Y + GRID_H + 6
-    CTA_H = H - CTA_Y
-    draw.rectangle([0, CTA_Y, W, H], fill=color)
-    bf   = _font(26)
-    bw_  = draw.textbbox((0,0), cta, font=bf)[2]+64
-    bh_  = 62
-    bx_  = (W-bw_)//2
-    by_  = CTA_Y+(CTA_H-bh_)//2-14
-    _rr(draw, [bx_, by_, bx_+bw_, by_+bh_], 31, WHITE)
-    tw_  = draw.textbbox((0,0), cta, font=bf)[2]
-    th_  = draw.textbbox((0,0), cta, font=bf)[3]
-    draw.text((bx_+(bw_-tw_)//2, by_+(bh_-th_)//2-2), cta, font=bf, fill=DARK)
-    wf = _font(20, False)
-    ww = draw.textbbox((0,0), BRAND_WEB, font=wf)[2]
-    draw.text(((W-ww)//2, by_+bh_+12), BRAND_WEB, font=wf, fill=(255,220,180))
-
+    # ── Footer ────────────────────────────────────────────────────────────────
+    _footer(img, draw, cta, color)
     return img
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Template 4 — GROW WITH US (portrait 1080x1350)
-# Brand blue gradient + 3 benefit cards + stats strip + dark CTA
+# Template 4 — GROW WITH US v2 (portrait 1080x1350)
+# Full-bleed diagonal split bg + cinematic photo + stats hero + impact cards
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _tpl_grow_with_us(hl, bullets, cta, color, photo=None, intro_label="WE OFFER"):
     W, H    = SIZE, HEIGHT
     BDARK   = (  0,  36, 130)
     BBRIGHT = (  1, 146, 239)
-    DARK    = ( 12,  16,  42)
-    NAVY    = (  6,  10,  28)
+    DARK    = ( 10,  13,  34)
+    NAVY    = (  6,   8,  22)
     WHITE   = (255, 255, 255)
-    MUTED   = (160, 185, 235)
-    LBLUE   = (220, 235, 255)
-    PAD     = 52
+    MUTED   = (145, 170, 225)
+    LBLUE   = (210, 228, 255)
+    PAD     = 62
 
     img  = Image.new("RGB", (W, H), NAVY)
-    draw = ImageDraw.Draw(img)
+    _gv(img, 0, 0, W, H, DARK, NAVY)
 
     # Header
-    HH = 90
-    draw.rectangle([0, 0, W, HH], fill=(8,12,34))
-    draw.rectangle([0, 0, 5, HH], fill=BBRIGHT)
-    img  = _paste_logo(img, PAD, (HH-52)//2, white=True)
+    img, draw, HH = _hdr(img, BBRIGHT)
+
+    # ── Hero: large diagonal color block + headline ────────────────────────────
+    HZ_Y, HZ_H = HH, 400
+    # Background: dark navy to brand dark blue
+    _gv(img, 0, HZ_Y, W, HZ_Y+HZ_H, BDARK, (8,10,28))
     draw = ImageDraw.Draw(img)
-    tf   = _font(20, False)
-    tw   = draw.textbbox((0,0), BRAND_TAG, font=tf)[2]
-    draw.text((W-PAD-tw, (HH-22)//2), BRAND_TAG, font=tf, fill=MUTED)
 
-    # Hero gradient
-    HERO_Y, HERO_H = HH, 310
-    for i in range(HERO_H):
-        t = i/max(HERO_H-1,1)
-        c = tuple(int(BDARK[j]+t*((8,12,38)[j]-BDARK[j])) for j in range(3))
-        draw.line([(0,HERO_Y+i),(W,HERO_Y+i)], fill=c)
-    draw.ellipse([W-220,HERO_Y-80,W+80,HERO_Y+220], outline=(*BBRIGHT,40), width=3)
-    draw.ellipse([W-160,HERO_Y-20,W+20,HERO_Y+160], outline=(*BBRIGHT,25), width=2)
+    # Photo composite (right side)
+    if photo:
+        PH_W, PH_H = 380, HZ_H
+        ph = _enhance_photo(_fit_photo(photo, PH_W, PH_H), brightness=0.65, contrast=1.25)
+        img.paste(ph, (W-PH_W, HZ_Y))
+        draw = ImageDraw.Draw(img)
+        _gh(img, W-PH_W-80, HZ_Y, W-PH_W+120, HZ_Y+HZ_H, (8,10,28), (0,0,0))
+        img = _ov(img, W-PH_W, HZ_Y, W, HZ_Y+HZ_H, BDARK, 140)
+        draw = ImageDraw.Draw(img)
 
-    y = HERO_Y + 40
-    lf   = _font(18)
-    lt   = intro_label
-    lw_  = draw.textbbox((0,0),lt,font=lf)[2]+32
-    _rr(draw,[PAD,y,PAD+lw_,y+34],17,BBRIGHT)
-    draw.text((PAD+16,y+7), lt, font=lf, fill=WHITE)
-    y += 54
+    # Large decorative arc (top right)
+    draw.arc([W-350, HZ_Y-80, W+50, HZ_Y+320], 150, 320, fill=(*BBRIGHT,50), width=3)
+    draw.arc([W-280, HZ_Y-20, W+20, HZ_Y+260], 150, 320, fill=(*BBRIGHT,30), width=2)
 
-    fh1 = _font(78)
-    words = hl.split()
-    draw.text((PAD,y), " ".join(words[:2]) if len(words)>1 else hl, font=fh1, fill=WHITE)
-    y += draw.textbbox((0,0), " ".join(words[:2]) if len(words)>1 else hl, font=fh1)[3]+4
-    if len(words)>2:
-        draw.text((PAD,y), " ".join(words[2:4]), font=fh1, fill=BBRIGHT)
-        y += draw.textbbox((0,0)," ".join(words[2:4]),font=fh1)[3]+16
-    else: y += 12
+    y = HZ_Y + 36
+    # Pill
+    pf  = _font(16)
+    pw_ = draw.textbbox((0,0),intro_label,font=pf)[2]+28
+    _rr(draw, [PAD, y, PAD+pw_, y+32], 16, BBRIGHT)
+    draw.text((PAD+14,y+7), intro_label, font=pf, fill=WHITE)
+    y += 50
+
+    # Headline: 3 lines
+    fh = _font(84)
+    words = hl.upper().split()
+    pairs = [(words[i:i+2]) for i in range(0,min(6,len(words)),2)]
+    hcols = [WHITE, BBRIGHT, color]
+    for idx, wds in enumerate(pairs[:3]):
+        txt = " ".join(wds)
+        draw.text((PAD, y), txt, font=fh, fill=hcols[idx%3])
+        y += draw.textbbox((0,0),txt,font=fh)[3] + 2
+    y += 14
+
+    # Tagline
     fs = _font(23, False)
-    sub = "With strategies that actually work — no fluff, just results."
-    for sl in _wrap(sub, fs, W-PAD*2, draw, 2):
-        draw.text((PAD,y), sl, font=fs, fill=MUTED); y+=33
+    for sl in _wrap("No fluff. Just results that grow your business.", fs, W-PAD*2, draw, 2):
+        draw.text((PAD, y), sl, font=fs, fill=MUTED); y += 32
 
-    # Divider
-    DIV_Y = HERO_Y + HERO_H
-    for i in range(W):
-        t=i/max(W-1,1)
-        c=tuple(int(BDARK[j]+t*(BBRIGHT[j]-BDARK[j])) for j in range(3))
-        draw.line([(i,DIV_Y),(i,DIV_Y+6)], fill=c)
-
-    # Benefit cards
-    BEN_Y = DIV_Y + 6
-    draw.rectangle([0,BEN_Y,W,BEN_Y+420], fill=DARK)
-    by = BEN_Y + 28
-    descs = [
-        "Rank higher on Google, get found by buyers who are ready to pay.",
-        "Fast, mobile-first design built to turn clicks into paying clients.",
-        "Scroll-stopping content for ecom brands and startups that convert.",
-    ]
-    for i, (bul, desc) in enumerate(zip(bullets[:3], descs)):
-        _rr(draw,[PAD,by,W-PAD,by+112],16,(16,20,52))
-        draw.rounded_rectangle([PAD,by,PAD+6,by+112],radius=4,fill=BBRIGHT)
-        fn  = _font(38)
-        num = f"0{i+1}"
-        draw.text((PAD+22,by+16), num, font=fn, fill=BBRIGHT)
-        nw_ = draw.textbbox((0,0),num,font=fn)[2]
-        ft  = _font(26)
-        tx_ = PAD+22+nw_+16
-        for tl in _wrap(bul, ft, W-PAD-tx_-24, draw, 1):
-            draw.text((tx_,by+18), tl, font=ft, fill=WHITE)
-        fd  = _font(20, False)
-        dy_ = by+56
-        for dl in _wrap(desc, fd, W-PAD-tx_-24, draw, 2):
-            draw.text((tx_,dy_), dl, font=fd, fill=MUTED); dy_+=28
-        by += 122
-
-    # Stats strip
-    TR_Y = BEN_Y + 420
-    TR_H = 130
-    draw.rectangle([0,TR_Y,W,TR_Y+TR_H], fill=BDARK)
-    stats = [("100+","Projects Done"),("8+","Years Exp"),("98%","Satisfaction")]
-    cw_   = W//3
+    # ── Stats band ─────────────────────────────────────────────────────────────
+    ST_Y = HZ_Y + HZ_H
+    ST_H = 108
+    _gh(img, 0, ST_Y, W, ST_Y+ST_H, BBRIGHT, BDARK)
+    draw = ImageDraw.Draw(img)
+    stats = [("100+","Projects"),("8+","Years Exp"),("98%","Satisfaction")]
+    cw2   = W // 3
     for idx,(val,lbl) in enumerate(stats):
-        cx = idx*cw_+cw_//2
-        fv = _font(44); fl = _font(19, False)
+        cx = idx*cw2 + cw2//2
+        fv = _font(42); fl = _font(18, False)
         vw = draw.textbbox((0,0),val,font=fv)[2]
         lw = draw.textbbox((0,0),lbl,font=fl)[2]
-        draw.text((cx-vw//2,TR_Y+14), val, font=fv, fill=BBRIGHT)
-        draw.text((cx-lw//2,TR_Y+66), lbl, font=fl, fill=LBLUE)
-        if idx<2:
-            draw.rectangle([idx*cw_+cw_-1,TR_Y+20,idx*cw_+cw_+1,TR_Y+TR_H-20],fill=(80,110,180))
+        draw.text((cx-vw//2, ST_Y+10), val, font=fv, fill=WHITE)
+        draw.text((cx-lw//2, ST_Y+60), lbl, font=fl, fill=(220,235,255))
+        if idx < 2:
+            draw.rectangle([idx*cw2+cw2-1,ST_Y+16,idx*cw2+cw2+1,ST_Y+ST_H-16], fill=(255,255,255,80))
 
-    # CTA
-    CTA_Y = TR_Y + TR_H
-    CTA_H = H - CTA_Y
-    for i in range(CTA_H):
-        t=i/max(CTA_H-1,1)
-        c=tuple(int((8,12,38)[j]+t*(NAVY[j]-(8,12,38)[j])) for j in range(3))
-        draw.line([(0,CTA_Y+i),(W,CTA_Y+i)], fill=c)
-    draw = ImageDraw.Draw(img)
-    bf   = _font(28)
-    bw_  = draw.textbbox((0,0),cta,font=bf)[2]+72
-    bh_  = 66
-    bx_  = (W-bw_)//2
-    by_  = CTA_Y+36
-    _rr(draw,[bx_,by_,bx_+bw_,by_+bh_],33,BBRIGHT)
-    tw_  = draw.textbbox((0,0),cta,font=bf)[2]
-    th_  = draw.textbbox((0,0),cta,font=bf)[3]
-    draw.text((bx_+(bw_-tw_)//2,by_+(bh_-th_)//2-2), cta, font=bf, fill=WHITE)
-    wf  = _font(20, False)
-    info= f"{BRAND_WEB}  |  {BRAND_PHONE}"
-    iw  = draw.textbbox((0,0),info,font=wf)[2]
-    draw.text(((W-iw)//2, by_+bh_+18), info, font=wf, fill=MUTED)
+    # ── 3 benefit cards ────────────────────────────────────────────────────────
+    BC_Y = ST_Y + ST_H + 8
+    BC_H = H - BC_Y - 120    # leaves 120px for footer
+    card_h = (BC_H - 24) // 3
+    descs = [
+        "Rank higher on Google. Get found by buyers who are ready to pay.",
+        "Fast, mobile-first sites built to turn every visitor into a client.",
+        "AI video ads & UGC content that stop scrollers and drive sales.",
+    ]
+    draw.rectangle([0, BC_Y, W, H-120], fill=DARK)
+    for i in range(3):
+        cy = BC_Y + i*(card_h+12)
+        # Subtle alternating bg
+        bg = (14,18,48) if i%2==0 else (10,13,36)
+        draw.rectangle([PAD-20, cy, W-PAD+20, cy+card_h], fill=bg)
+        # Left stripe: alternating colors
+        sc  = BBRIGHT if i%2==0 else color
+        draw.rectangle([PAD-20, cy, PAD-14, cy+card_h], fill=sc)
+        # Number large
+        fn  = _font(48)
+        num = f"0{i+1}"
+        draw.text((PAD, cy+card_h//2-28), num, font=fn, fill=sc)
+        nw_ = draw.textbbox((0,0),num,font=fn)[2]
+        # Title
+        ft  = _font(27)
+        bul = bullets[i] if i < len(bullets) else descs[i][:30]
+        for tl in _wrap(bul, ft, W-PAD-nw_-PAD-30, draw, 1):
+            draw.text((PAD+nw_+20, cy+10), tl, font=ft, fill=WHITE)
+        # Desc
+        fd  = _font(20, False)
+        dy_ = cy+46
+        for dl in _wrap(descs[i], fd, W-PAD-nw_-PAD-30, draw, 2):
+            draw.text((PAD+nw_+20, dy_), dl, font=fd, fill=MUTED); dy_+=26
+        # Divider
+        if i < 2:
+            draw.rectangle([PAD, cy+card_h-1, W-PAD, cy+card_h], fill=(28,34,72))
 
+    # ── Footer ─────────────────────────────────────────────────────────────────
+    _footer(img, draw, cta, BBRIGHT)
     return img
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# Template 5 — WHAT WE BUILD (portrait 1080x1350)
-# Blue gradient header + 4 detailed service cards + CTA
+# Template 5 — WHAT WE BUILD v2 (portrait 1080x1350)
+# Magazine-style: bold top color block + editorial service list + premium footer
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def _tpl_what_we_build(hl, bullets, cta, color, photo=None, intro_label="WE OFFER"):
     W, H    = SIZE, HEIGHT
     BDARK   = (  0,  36, 130)
     BBRIGHT = (  1, 146, 239)
-    NAVY    = (  6,  10,  28)
-    DARK    = ( 10,  14,  38)
+    NAVY    = (  6,   8,  22)
+    DARK    = ( 10,  13,  34)
     WHITE   = (255, 255, 255)
-    MUTED   = (160, 185, 235)
-    LBLUE   = (220, 235, 255)
-    PAD     = 52
+    MUTED   = (145, 168, 220)
+    LBLUE   = (210, 228, 255)
+    PAD     = 72
 
     img  = Image.new("RGB", (W, H), NAVY)
+    _gv(img, 0, 0, W, H, DARK, NAVY)
     draw = ImageDraw.Draw(img)
 
-    # Header
-    HH = 90
-    draw.rectangle([0, 0, W, HH], fill=(8,12,34))
-    draw.rectangle([0, HH-5, W, HH], fill=BBRIGHT)
-    img  = _paste_logo(img, PAD, (HH-52)//2, white=True)
-    draw = ImageDraw.Draw(img)
-    tf   = _font(20, False)
-    tw   = draw.textbbox((0,0), BRAND_TAG, font=tf)[2]
-    draw.text((W-PAD-tw, (HH-22)//2), BRAND_TAG, font=tf, fill=MUTED)
+    # ── Header ─────────────────────────────────────────────────────────────────
+    img, draw, HH = _hdr(img, color)
 
-    # Title section
-    TS_Y, TS_H = HH, 130
-    for i in range(TS_H):
-        t=i/max(TS_H-1,1)
-        c=tuple(int(BDARK[j]+t*((10,14,40)[j]-BDARK[j])) for j in range(3))
-        draw.line([(0,TS_Y+i),(W,TS_Y+i)], fill=c)
-    draw = ImageDraw.Draw(img)
-    ft1  = _font(21, False)
-    ft2  = _font(62)
-    sub_t= "FULL-SERVICE DIGITAL AGENCY"
-    stw  = draw.textbbox((0,0),sub_t,font=ft1)[2]
-    draw.text(((W-stw)//2,TS_Y+12), sub_t, font=ft1, fill=BBRIGHT)
-    main_t = hl[:20] if len(hl)>20 else hl
-    mtw    = draw.textbbox((0,0),main_t,font=ft2)[2]
-    draw.text(((W-mtw)//2,TS_Y+42), main_t, font=ft2, fill=WHITE)
+    # ── Bold top section: color block with large headline ──────────────────────
+    TOP_Y = HH
+    TOP_H = 320
+    # Solid brand dark blue
+    draw.rectangle([0, TOP_Y, W, TOP_Y+TOP_H], fill=BDARK)
+    # Diagonal accent: large triangle bottom-right
+    pts = [(W, TOP_Y+TOP_H-120), (W, TOP_Y+TOP_H), (W-240, TOP_Y+TOP_H)]
+    draw.polygon(pts, fill=color)
+    # Small decorative dots grid (top-right area)
+    for row in range(4):
+        for col in range(5):
+            dx, dy = W-60-col*28, TOP_Y+20+row*28
+            draw.ellipse([dx,dy,dx+8,dy+8], fill=(*WHITE,40))
 
-    # 4 service cards
-    CS = TS_Y+TS_H+8
-    CH = 200; CG = 12
+    y = TOP_Y + 38
+    # "AGENCY" small label
+    al  = _font(16, False)
+    at  = "FULL-SERVICE DIGITAL AGENCY"
+    draw.text((PAD, y), at, font=al, fill=(*BBRIGHT, 200))
+    y += 30
+    # Orange accent bar under label
+    draw.rectangle([PAD, y, PAD+60, y+3], fill=color)
+    y += 18
+
+    # Headline: 2-3 lines, very large, white
+    fh  = _font(96)
+    words = hl.upper().split()
+    pairs = [words[i:i+2] for i in range(0,min(6,len(words)),2)]
+    cols_hl = [WHITE, BBRIGHT, color]
+    for idx, wds in enumerate(pairs[:3]):
+        txt = " ".join(wds)
+        draw.text((PAD, y), txt, font=fh, fill=cols_hl[idx%3])
+        y += draw.textbbox((0,0),txt,font=fh)[3] + 2
+
+    # ── Divider strip ───────────────────────────────────────────────────────────
+    DIV_Y = TOP_Y + TOP_H
+    _gh(img, 0, DIV_Y, W, DIV_Y+8, color, BBRIGHT)
+    draw = ImageDraw.Draw(img)
+
+    # ── 4 editorial service rows ────────────────────────────────────────────────
+    SVC_START = DIV_Y + 8
+    SVC_END   = H - 120
+    ROW_H     = (SVC_END - SVC_START) // 4
     svcs = [
-        ("Website Design & Dev","Fast, modern sites that convert. WordPress, custom HTML, landing pages."),
-        ("SEO & Google Ranking","Get on Page 1. Technical SEO, local SEO, keyword strategy & link building."),
-        ("UGC & AI Video Ads","Scroll-stopping video content for social ads and ecom product pages."),
-        ("eCommerce Solutions","Shopify, WooCommerce stores built to sell. CRO-optimized product pages."),
+        ("Website Design & Dev",  "WordPress, custom HTML, landing pages — built to convert."),
+        ("SEO & Google Ranking",   "Page 1 results. Technical SEO, local SEO, link building."),
+        ("UGC & AI Video Ads",     "Scroll-stopping content for ecom brands and startups."),
+        ("eCommerce Solutions",    "Shopify & WooCommerce stores — CRO-optimized to sell."),
     ]
+    draw.rectangle([0, SVC_START, W, SVC_END], fill=DARK)
+
     for idx, (title, desc) in enumerate(svcs):
-        cy = CS + idx*(CH+CG)
-        cb = (14,18,50) if idx%2==0 else (10,14,38)
-        _rr(draw,[PAD//2,cy,W-PAD//2,cy+CH],20,cb)
-        sc = BBRIGHT if idx%2==0 else BDARK
-        draw.rounded_rectangle([PAD//2,cy,PAD//2+8,cy+CH],radius=4,fill=sc)
-        fn  = _font(52)
+        ry = SVC_START + idx*ROW_H
+        # Alternating row bg
+        bg = (14,18,48) if idx%2==0 else (10,13,36)
+        draw.rectangle([0, ry, W, ry+ROW_H], fill=bg)
+
+        # Number badge (large, right side)
+        fn  = _font(72)
         num = f"0{idx+1}"
-        draw.text((PAD//2+22,cy+14), num, font=fn, fill=sc)
         nw_ = draw.textbbox((0,0),num,font=fn)[2]
-        fct = _font(30)
-        tx_ = PAD//2+22+nw_+20
-        for tl in _wrap(title, fct, W-PAD//2-tx_-30, draw, 1):
-            draw.text((tx_,cy+22), tl, font=fct, fill=WHITE)
-        fcd = _font(22, False)
-        dy2 = cy+70
-        for dl in _wrap(desc, fcd, W-PAD//2-tx_-30, draw, 2):
-            draw.text((tx_,dy2), dl, font=fcd, fill=MUTED); dy2+=32
-        lm_f = _font(19, False)
-        lm_t = "Learn More  >"
-        lmw  = draw.textbbox((0,0),lm_t,font=lm_f)[2]
-        draw.text((W-PAD-lmw, cy+CH-30), lm_t, font=lm_f, fill=BBRIGHT)
+        # Draw number faint on right
+        draw.text((W-PAD-nw_, ry+(ROW_H-80)//2), num, font=fn,
+                  fill=(*(color if idx%2==0 else BBRIGHT), 45 if True else 45))
+        # Actually draw with low-opacity trick: draw darker version
+        nc  = tuple(min(255,v+30) for v in (DARK if idx%2==0 else (14,18,48)))
+        draw.text((W-PAD-nw_+2, ry+(ROW_H-80)//2+2), num, font=fn, fill=nc)
+        draw.text((W-PAD-nw_, ry+(ROW_H-80)//2), num, font=fn,
+                  fill=(color if idx%2==0 else BBRIGHT))
 
-    # CTA
-    CE = CS+4*(CH+CG)
-    for i in range(H-CE):
-        t=i/max(H-CE-1,1)
-        c=tuple(int(BDARK[j]+t*(NAVY[j]-BDARK[j])) for j in range(3))
-        draw.line([(0,CE+i),(W,CE+i)], fill=c)
-    draw = ImageDraw.Draw(img)
-    tl_f = _font(26, False)
-    tl_t = "Ready to grow your business online?"
-    tlw  = draw.textbbox((0,0),tl_t,font=tl_f)[2]
-    draw.text(((W-tlw)//2, CE+22), tl_t, font=tl_f, fill=LBLUE)
-    bf   = _font(28)
-    bw_  = draw.textbbox((0,0),cta,font=bf)[2]+68
-    bh_  = 64
-    bx_  = (W-bw_)//2
-    by_  = CE+72
-    _rr(draw,[bx_,by_,bx_+bw_,by_+bh_],32,BBRIGHT)
-    tw_  = draw.textbbox((0,0),cta,font=bf)[2]
-    th_  = draw.textbbox((0,0),cta,font=bf)[3]
-    draw.text((bx_+(bw_-tw_)//2,by_+(bh_-th_)//2-2), cta, font=bf, fill=WHITE)
-    wf   = _font(20, False)
-    info = f"{BRAND_WEB}  |  {BRAND_PHONE}"
-    iw   = draw.textbbox((0,0),info,font=wf)[2]
-    draw.text(((W-iw)//2, by_+bh_+16), info, font=wf, fill=MUTED)
+        # Left color bar
+        bar = color if idx%2==0 else BBRIGHT
+        draw.rectangle([0, ry+12, 7, ry+ROW_H-12], fill=bar)
 
+        # Title
+        ft  = _font(30)
+        draw.text((PAD, ry+18), title, font=ft, fill=WHITE)
+        # Description
+        fd  = _font(21, False)
+        dy2 = ry + 58
+        for dl in _wrap(desc, fd, W-PAD-nw_-PAD-20, draw, 2):
+            draw.text((PAD, dy2), dl, font=fd, fill=MUTED); dy2 += 28
+        # Thin divider
+        if idx < 3:
+            draw.rectangle([PAD, ry+ROW_H-1, W-PAD, ry+ROW_H], fill=(24,30,62))
+
+    # ── Footer ─────────────────────────────────────────────────────────────────
+    _footer(img, draw, cta, color)
     return img
 
 
