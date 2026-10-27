@@ -279,164 +279,113 @@ def _grad_overlay(img, x0, y0, x1, y1, color, start_alpha=0, end_alpha=200):
 # Clean professional agency look
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVIDE"):
-    WHITE = (255, 255, 255)
-    DARK  = (18, 20, 35)
-    GRAY  = (240, 242, 248)
+def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="PRO TIP"):
+    """Clean split: photo right (full height), text left, dark footer."""
+    WHITE  = (255, 255, 255)
+    DARK   = (14, 16, 30)
+    LIGHT  = (245, 247, 252)
 
-    PAD   = 48          # outer horizontal padding
-    GAP   = 32          # gap between text panel and photo
+    PAD    = 44
+    FOOTER = 88
+    HEADER = 88
 
-    img = Image.new("RGB", (SIZE, SIZE), WHITE)
+    img  = Image.new("RGB", (SIZE, SIZE), LIGHT)
     draw = ImageDraw.Draw(img)
 
-    # ── Left accent strip (full height)
-    STRIP_W = 10
-    draw.rectangle([0, 0, STRIP_W, SIZE], fill=color)
-
-    # ── Top color header band (full width)
-    BAND_H = 120
-    _grad(img, 0, 0, SIZE, BAND_H, _dim(color, 20), color)
+    # ── Header band
+    draw.rectangle([0, 0, SIZE, HEADER], fill=DARK)
+    draw.rectangle([0, HEADER - 4, SIZE, HEADER], fill=color)
+    img = _paste_logo(img, PAD, (HEADER - 50) // 2, white=True)
     draw = ImageDraw.Draw(img)
+    # Tag line top right
+    tag = BRAND_TAG
+    tw = draw.textbbox((0, 0), tag, font=_font(18, False))[2]
+    draw.text((SIZE - PAD - tw, (HEADER - 22) // 2), tag,
+              font=_font(18, False), fill=(160, 175, 210))
 
-    # Decorative circles in band (top right)
-    for rad, opa in [(220, 15), (155, 25), (90, 40)]:
-        col = tuple(int(c * opa / 100 + 255 * (1 - opa / 100)) for c in color)
-        draw.ellipse([SIZE - rad, -rad // 2, SIZE + rad, rad + BAND_H // 2],
-                     outline=col, width=2)
+    # ── Right photo panel — full content height
+    PH_X0 = SIZE // 2 + 10
+    PH_Y0 = HEADER
+    PH_X1 = SIZE
+    PH_Y1 = SIZE - FOOTER
+    PH_W  = PH_X1 - PH_X0
+    PH_H  = PH_Y1 - PH_Y0
 
-    # Logo on band — white, vertically centered with clear margin
-    logo_y = (BAND_H - 52) // 2   # centers a ~52px-tall logo; never clips top or bottom
-    img = _paste_logo(img, PAD, logo_y, white=True)
-    draw = ImageDraw.Draw(img)
-
-    # Social icons — top right on band, same vertical center as logo
-    for i, ic in enumerate(["f", "ig", "in"]):
-        ix = SIZE - PAD - 36 - i * 52
-        iy = (BAND_H - 36) // 2
-        draw.ellipse([ix, iy, ix + 36, iy + 36], outline=(255, 255, 255), width=2)
-        tw = draw.textbbox((0, 0), ic, font=_font(15, False))[2]
-        draw.text((ix + (36 - tw) // 2, iy + 9), ic, font=_font(15, False), fill=(255, 255, 255))
-
-    # ── Layout constants
-    CONTENT_Y = BAND_H + 36       # top of content area
-    BOTTOM_BAR_H = 96
-    BAR_Y = SIZE - BOTTOM_BAR_H  # y where bottom bar starts
-
-    PHOTO_W = 420
-    PHOTO_X0 = SIZE - PAD - PHOTO_W
-    PHOTO_Y0 = CONTENT_Y
-    PHOTO_Y1 = BAR_Y - 24
-    PHOTO_H  = PHOTO_Y1 - PHOTO_Y0
-
-    TEXT_X = STRIP_W + PAD
-    TEXT_W = PHOTO_X0 - TEXT_X - GAP
-
-    # ── Right photo panel
     if photo:
-        ph = _enhance_photo(_fit_photo(photo, PHOTO_W, PHOTO_H))
-        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=20, fill=255)
-        img.paste(ph, (PHOTO_X0, PHOTO_Y0), mask)
+        ph = _enhance_photo(_fit_photo(photo, PH_W, PH_H))
+        img.paste(ph, (PH_X0, PH_Y0))
         draw = ImageDraw.Draw(img)
-        draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 32, PHOTO_Y0 + 8], fill=color)
-        draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 8, PHOTO_Y0 + 32], fill=color)
+        # Gradient overlay on left edge of photo so text doesn't clash
+        _grad_overlay(img, PH_X0, PH_Y0, PH_X0 + 60, PH_Y1, LIGHT,
+                      start_alpha=120, end_alpha=0)
+        draw = ImageDraw.Draw(img)
+        # Color accent bar on photo left edge
+        draw.rectangle([PH_X0, PH_Y0, PH_X0 + 5, PH_Y1], fill=color)
     else:
-        # Branded gradient panel — looks intentional, not a placeholder
-        panel = Image.new("RGB", (PHOTO_W, PHOTO_H), color)
-        _grad(panel, 0, 0, PHOTO_W, PHOTO_H, color, _dim(color, 70))
-        pd = ImageDraw.Draw(panel)
-        # Decorative circles
-        for rad, opa in [(200, 20), (140, 35), (75, 55)]:
-            pd.ellipse([PHOTO_W // 2 - rad, PHOTO_H // 2 - rad,
-                        PHOTO_W // 2 + rad, PHOTO_H // 2 + rad],
-                       outline=tuple(min(255, c + opa) for c in color), width=2)
-        # Center: large intro label
-        fc = _font(46)
-        tw = pd.textbbox((0, 0), intro_label, font=fc)[2]
-        pd.text(((PHOTO_W - tw) // 2, PHOTO_H // 2 - 60), intro_label, font=fc, fill=WHITE)
-        # Underline
-        pd.rectangle([(PHOTO_W - 80) // 2, PHOTO_H // 2 + 0,
-                       (PHOTO_W + 80) // 2, PHOTO_H // 2 + 5], fill=WHITE)
-        # Website
-        fw = _font(18, False)
-        tw2 = pd.textbbox((0, 0), BRAND_WEB, font=fw)[2]
-        pd.text(((PHOTO_W - tw2) // 2, PHOTO_H // 2 + 22), BRAND_WEB, font=fw,
-                fill=tuple(min(255, c + 90) for c in color))
-        # Corner dots
-        for cx, cy in [(30, 30), (PHOTO_W - 30, 30), (30, PHOTO_H - 30), (PHOTO_W - 30, PHOTO_H - 30)]:
-            pd.ellipse([cx - 8, cy - 8, cx + 8, cy + 8], fill=WHITE)
-        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=20, fill=255)
-        img.paste(panel, (PHOTO_X0, PHOTO_Y0), mask)
+        # Solid color panel — intentional branded look
+        _grad(img, PH_X0, PH_Y0, PH_X1, PH_Y1, _dim(color, 85), _dim(color, 50))
         draw = ImageDraw.Draw(img)
+        draw.rectangle([PH_X0, PH_Y0, PH_X0 + 5, PH_Y1], fill=color)
+        # Website watermark
+        fw = _font(20, False)
+        tw = draw.textbbox((0, 0), BRAND_WEB, font=fw)[2]
+        draw.text(((PH_X0 + PH_X1 - tw) // 2, (PH_Y0 + PH_Y1) // 2),
+                  BRAND_WEB, font=fw, fill=(255, 255, 255, 160))
 
-    # ── Left text content
-    y = CONTENT_Y
+    # ── Left text panel
+    TX  = PAD
+    TW  = PH_X0 - PAD - 24          # text max width, stop before photo
+    y   = HEADER + 32
 
-    # Intro label
-    draw.text((TEXT_X, y), intro_label, font=_font(22), fill=color)
-    y += 36
+    # Pill label
+    lw = draw.textbbox((0, 0), intro_label, font=_font(20))[2] + 32
+    _rr(draw, [TX, y, TX + lw, y + 36], 18, color)
+    draw.text((TX + 16, y + 7), intro_label, font=_font(20), fill=WHITE)
+    y += 52
 
-    # Colored accent bar
-    draw.rectangle([TEXT_X, y, TEXT_X + 56, y + 5], fill=color)
-    y += 20
-
-    # Headline — first half dark, second half color
-    fh1 = _font(52)
-    fh2 = _font(64)
-    words = hl.split()
-    mid = max(1, len(words) // 2)
-    for part, fnt, col in [(" ".join(words[:mid]), fh1, DARK),
-                            (" ".join(words[mid:]), fh2, color)]:
-        for wl in _wrap(part, fnt, TEXT_W, draw, max_lines=2):
-            draw.text((TEXT_X, y), wl, font=fnt, fill=col)
-            y += draw.textbbox((0, 0), wl, font=fnt)[3] + 4
-
-    y += 10
-
-    # Tagline
-    draw.text((TEXT_X, y), "We Help To Grow Your Business", font=_font(20, False),
-              fill=(100, 112, 145))
-    y += 36
+    # Headline — single color, bold, 2-3 lines max
+    fh = _font(46)
+    for line in _wrap(hl, fh, TW, draw, max_lines=3):
+        draw.text((TX, y), line, font=fh, fill=DARK)
+        y += draw.textbbox((0, 0), line, font=fh)[3] + 6
+    y += 12
 
     # Divider
-    draw.rectangle([TEXT_X, y, TEXT_X + TEXT_W, y + 2], fill=(218, 222, 238))
+    draw.rectangle([TX, y, TX + 60, y + 4], fill=color)
     y += 20
 
-    # Services label
-    draw.text((TEXT_X, y), "What We Do", font=_font(24), fill=DARK)
-    y += 40
+    # Bullets — clean tick style
+    fb  = _font(21, False)
+    dot = "▸"
+    for bul in bullets[:4]:
+        # Wrap long bullets
+        blines = _wrap(bul, fb, TW - 28, draw, max_lines=2)
+        for bi, bl in enumerate(blines):
+            if bi == 0:
+                dw = draw.textbbox((0, 0), dot + " ", font=fb)[2]
+                draw.text((TX, y), dot, font=fb, fill=color)
+                draw.text((TX + dw, y), bl, font=fb, fill=(40, 50, 75))
+            else:
+                draw.text((TX + 28, y), bl, font=fb, fill=(40, 50, 75))
+            y += 34
+        y += 4
+        if y > SIZE - FOOTER - 50:
+            break
 
-    # Numbered bullets
-    fb = _font(22, False)
-    fn = _font(30)
-    for i, bul in enumerate(bullets[:4]):
-        num = f"0{i + 1}"
-        draw.text((TEXT_X, y), num, font=fn, fill=color)
-        nw = draw.textbbox((0, 0), num, font=fn)[2]
-        draw.text((TEXT_X + nw + 12, y + 4), bul, font=fb, fill=(28, 38, 62))
-        y += 46
-        if i < 3:
-            draw.rectangle([TEXT_X, y, TEXT_X + TEXT_W - 8, y + 1], fill=(228, 232, 246))
-            y += 10
+    # ── Footer
+    draw.rectangle([0, SIZE - FOOTER, SIZE, SIZE], fill=DARK)
+    draw.rectangle([0, SIZE - FOOTER, SIZE, SIZE - FOOTER + 4], fill=color)
 
-    # ── Bottom bar
-    draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=DARK)
-    draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
+    bf   = _font(19)
+    bw   = draw.textbbox((0, 0), cta, font=bf)[2] + 56
+    bw   = max(200, min(bw, 300))
+    by   = SIZE - FOOTER + (FOOTER - 44) // 2
+    _btn(draw, PAD, by, bw, 44, color, cta, bf, WHITE)
 
-    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 48) // 2
-    btn_font = _font(19)
-    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 64
-    btn_w = max(220, min(btn_w, 320))
-    _btn(draw, PAD, BTN_Y, btn_w, 48, color, cta, btn_font, WHITE)
-
-    INFO_X = PAD + btn_w + 36   # wider gap between button and phone text
-    footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
-    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 26) // 2),
-              footer_text, font=_font(19, False), fill=(190, 200, 230))
+    info = f"{BRAND_PHONE}  |  {BRAND_WEB}"
+    iw   = draw.textbbox((0, 0), info, font=_font(18, False))[2]
+    draw.text((SIZE - PAD - iw, SIZE - FOOTER + (FOOTER - 22) // 2),
+              info, font=_font(18, False), fill=(160, 175, 210))
 
     return img
 
@@ -448,152 +397,108 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
 # Gold/color accents, high contrast professional look
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
-    DARK  = (10, 12, 28)
-    DARK2 = (16, 18, 40)
+def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="PRO TIP"):
+    """Dark bg, photo right full-height, bold white headline left."""
+    DARK  = (12, 14, 30)
     WHITE = (255, 255, 255)
 
-    PAD  = 48           # outer padding
-    GAP  = 28           # gap between text and photo
-    LINE_GAP = 10       # extra space between text lines
+    PAD    = 44
+    FOOTER = 88
+    HEADER = 88
 
     img = Image.new("RGB", (SIZE, SIZE), DARK)
-    _grad(img, 0, 0, SIZE // 2, SIZE, DARK2, DARK)
     draw = ImageDraw.Draw(img)
 
-    # Decorative background circles (top-right)
-    for rad in [420, 320, 220]:
-        alpha = 12 if rad == 420 else (20 if rad == 320 else 35)
-        col = tuple(int(c * alpha / 100 + DARK[i] * (1 - alpha / 100))
-                    for i, c in enumerate(color))
-        draw.ellipse([SIZE - rad - 60, -rad // 3, SIZE + rad - 60, rad * 4 // 3],
-                     outline=col, width=2)
+    # Subtle diagonal gradient background
+    _grad(img, 0, 0, SIZE, SIZE, (18, 20, 42), DARK)
+    draw = ImageDraw.Draw(img)
 
-    # ── Top bar
-    draw.rectangle([0, 0, SIZE, 6], fill=color)
+    # ── Header
+    draw.rectangle([0, 0, SIZE, HEADER], fill=(8, 10, 24))
+    draw.rectangle([0, HEADER - 4, SIZE, HEADER], fill=color)
+    img = _paste_logo(img, PAD, (HEADER - 50) // 2, white=True)
+    draw = ImageDraw.Draw(img)
+    tag = BRAND_TAG
+    tw = draw.textbbox((0, 0), tag, font=_font(18, False))[2]
+    draw.text((SIZE - PAD - tw, (HEADER - 22) // 2), tag,
+              font=_font(18, False), fill=(100, 120, 170))
 
-    # ── Layout constants
-    BOTTOM_BAR_H = 96
-    BAR_Y = SIZE - BOTTOM_BAR_H
+    # ── Photo right — full content height, no padding
+    PH_X0 = SIZE // 2 + 20
+    PH_Y0 = HEADER
+    PH_X1 = SIZE
+    PH_Y1 = SIZE - FOOTER
+    PH_W  = PH_X1 - PH_X0
+    PH_H  = PH_Y1 - PH_Y0
 
-    PHOTO_X0 = SIZE // 2 + 20
-    PHOTO_Y0 = PAD + 56          # below logo row
-    PHOTO_X1 = SIZE - PAD
-    PHOTO_Y1 = BAR_Y - 20
-    PHOTO_W  = PHOTO_X1 - PHOTO_X0
-    PHOTO_H  = PHOTO_Y1 - PHOTO_Y0
-
-    # ── Photo right panel
     if photo:
-        ph = _enhance_photo(_fit_photo(photo, PHOTO_W, PHOTO_H),
-                            contrast=1.1, brightness=0.97)
-        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=22, fill=255)
-        img.paste(ph, (PHOTO_X0, PHOTO_Y0), mask)
+        ph = _enhance_photo(_fit_photo(photo, PH_W, PH_H), contrast=1.1, brightness=0.95)
+        img.paste(ph, (PH_X0, PH_Y0))
         draw = ImageDraw.Draw(img)
-        # Corner accent bottom-right
-        draw.rectangle([PHOTO_X1 - 48, PHOTO_Y1, PHOTO_X1, PHOTO_Y1 + 6], fill=color)
-        draw.rectangle([PHOTO_X1, PHOTO_Y1 - 48, PHOTO_X1 + 6, PHOTO_Y1 + 6], fill=color)
-        # Dot accent top-left
-        draw.ellipse([PHOTO_X0 - 14, PHOTO_Y0 - 14, PHOTO_X0 + 14, PHOTO_Y0 + 14],
-                     fill=color)
+        # Dark gradient fade on left edge of photo so text is readable
+        _grad_overlay(img, PH_X0, PH_Y0, PH_X0 + 80, PH_Y1, DARK,
+                      start_alpha=180, end_alpha=0)
+        draw = ImageDraw.Draw(img)
+        draw.rectangle([PH_X0, PH_Y0, PH_X0 + 5, PH_Y1], fill=color)
     else:
-        panel = Image.new("RGB", (PHOTO_W, PHOTO_H), _dim(color, 60))
-        _grad(panel, 0, 0, PHOTO_W, PHOTO_H, _dim(color, 80), _dim(color, 30))
-        pd = ImageDraw.Draw(panel)
-        for rad, opa in [(200, 18), (135, 30), (70, 50)]:
-            pd.ellipse([PHOTO_W // 2 - rad, PHOTO_H // 2 - rad,
-                        PHOTO_W // 2 + rad, PHOTO_H // 2 + rad],
-                       outline=tuple(min(255, c + opa) for c in color), width=2)
-        fc = _font(46)
-        tw = pd.textbbox((0, 0), intro_label, font=fc)[2]
-        pd.text(((PHOTO_W - tw) // 2, PHOTO_H // 2 - 60), intro_label, font=fc, fill=WHITE)
-        pd.rectangle([(PHOTO_W - 80) // 2, PHOTO_H // 2 + 0,
-                       (PHOTO_W + 80) // 2, PHOTO_H // 2 + 5], fill=color)
-        fw = _font(18, False)
-        tw2 = pd.textbbox((0, 0), BRAND_WEB, font=fw)[2]
-        pd.text(((PHOTO_W - tw2) // 2, PHOTO_H // 2 + 22), BRAND_WEB, font=fw,
-                fill=_light(color, 80))
-        for cx, cy in [(30, 30), (PHOTO_W - 30, 30), (30, PHOTO_H - 30), (PHOTO_W - 30, PHOTO_H - 30)]:
-            pd.ellipse([cx - 8, cy - 8, cx + 8, cy + 8], fill=color)
-        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
-        ImageDraw.Draw(mask).rounded_rectangle(
-            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=22, fill=255)
-        img.paste(panel, (PHOTO_X0, PHOTO_Y0), mask)
+        # Color panel fallback
+        _grad(img, PH_X0, PH_Y0, PH_X1, PH_Y1, _dim(color, 60), _dim(color, 25))
         draw = ImageDraw.Draw(img)
+        draw.rectangle([PH_X0, PH_Y0, PH_X0 + 5, PH_Y1], fill=color)
+        fw2 = _font(20, False)
+        tw2 = draw.textbbox((0, 0), BRAND_WEB, font=fw2)[2]
+        draw.text(((PH_X0 + PH_X1 - tw2) // 2, (PH_Y0 + PH_Y1) // 2),
+                  BRAND_WEB, font=fw2, fill=(200, 215, 245))
 
-    # ── Left text area
-    TEXT_W = PHOTO_X0 - PAD - GAP
+    # ── Left text
+    TX = PAD
+    TW = PH_X0 - PAD - 20
+    y  = HEADER + 36
 
-    # Logo top-left (white)
-    img = _paste_logo(img, PAD, (PAD + 56 - 60) // 2 + 8, white=True)
-    draw = ImageDraw.Draw(img)
+    lw = draw.textbbox((0, 0), intro_label, font=_font(20))[2] + 32
+    _rr(draw, [TX, y, TX + lw, y + 36], 18, color)
+    draw.text((TX + 16, y + 7), intro_label, font=_font(20), fill=WHITE)
+    y += 52
 
-    # Social icons top-right
-    for i, ic in enumerate(["f", "ig", "in"]):
-        ix = SIZE - PAD - 34 - i * 50
-        iy = (PAD + 56 - 34) // 2 + 8
-        draw.ellipse([ix, iy, ix + 34, iy + 34], outline=(80, 92, 132), width=2)
-        tw = draw.textbbox((0, 0), ic, font=_font(14, False))[2]
-        draw.text((ix + (34 - tw) // 2, iy + 8), ic,
-                  font=_font(14, False), fill=(130, 148, 188))
+    fh = _font(46)
+    for line in _wrap(hl, fh, TW, draw, max_lines=3):
+        draw.text((TX, y), line, font=fh, fill=WHITE)
+        y += draw.textbbox((0, 0), line, font=fh)[3] + 6
+    y += 14
 
-    # Intro label pill
-    y = PHOTO_Y0 + 4
-    intro_w = draw.textbbox((0, 0), intro_label, font=_font(24))[2] + 44
-    _rr(draw, [PAD, y, PAD + intro_w, y + 42], 21, color)
-    draw.text((PAD + 22, y + 8), intro_label, font=_font(24), fill=WHITE)
-    y += 62
+    draw.rectangle([TX, y, TX + 60, y + 4], fill=color)
+    y += 22
 
-    # Big headline — first half big white, second half medium color
-    fh_big = _font(68)
-    fh_med = _font(52)
-    words = hl.split()
-    mid = max(1, len(words) // 2)
-    for part, fnt, col in [(" ".join(words[:mid]), fh_big, WHITE),
-                            (" ".join(words[mid:]), fh_med, color)]:
-        for line in _wrap(part, fnt, TEXT_W, draw, max_lines=2):
-            draw.text((PAD, y), line, font=fnt, fill=col)
-            y += draw.textbbox((0, 0), line, font=fnt)[3] + LINE_GAP
-
-    # Accent sub-text
-    y += 6
-    draw.text((PAD, y), "for your business", font=_font(26, False),
-              fill=_light(color, 55))
-    y += 46
-
-    # Thick underline
-    draw.rectangle([PAD, y, PAD + 180, y + 6], fill=color)
-    y += 28
-
-    # Services header
-    draw.text((PAD, y), "Our Services", font=_font(26), fill=(200, 210, 240))
-    y += 44
-
-    # Bullet list
-    fb = _font(23, False)
+    fb  = _font(21, False)
+    dot = "▸"
     for bul in bullets[:4]:
-        draw.rectangle([PAD, y + 8, PAD + 8, y + 22], fill=color)
-        draw.text((PAD + 22, y), bul, font=fb, fill=(168, 184, 222))
-        y += 44
-        if y > BAR_Y - 50:
+        blines = _wrap(bul, fb, TW - 28, draw, max_lines=2)
+        for bi, bl in enumerate(blines):
+            dw = draw.textbbox((0, 0), dot + " ", font=fb)[2]
+            if bi == 0:
+                draw.text((TX, y), dot, font=fb, fill=color)
+                draw.text((TX + dw, y), bl, font=fb, fill=(180, 195, 230))
+            else:
+                draw.text((TX + dw, y), bl, font=fb, fill=(180, 195, 230))
+            y += 34
+        y += 4
+        if y > SIZE - FOOTER - 50:
             break
 
-    # ── Bottom info bar
-    draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=(14, 16, 34))
-    draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
+    # ── Footer
+    draw.rectangle([0, SIZE - FOOTER, SIZE, SIZE], fill=(8, 10, 24))
+    draw.rectangle([0, SIZE - FOOTER, SIZE, SIZE - FOOTER + 4], fill=color)
 
-    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 48) // 2
-    btn_font = _font(19)
-    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 64
-    btn_w = max(220, min(btn_w, 320))
-    _btn(draw, PAD, BTN_Y, btn_w, 48, color, cta, btn_font, WHITE)
+    bf  = _font(19)
+    bw  = draw.textbbox((0, 0), cta, font=bf)[2] + 56
+    bw  = max(200, min(bw, 300))
+    by  = SIZE - FOOTER + (FOOTER - 44) // 2
+    _btn(draw, PAD, by, bw, 44, color, cta, bf, WHITE)
 
-    INFO_X = PAD + btn_w + 36   # wider gap between button and phone text
-    footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
-    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 26) // 2),
-              footer_text, font=_font(19, False), fill=(190, 200, 240))
+    info = f"{BRAND_PHONE}  |  {BRAND_WEB}"
+    iw   = draw.textbbox((0, 0), info, font=_font(18, False))[2]
+    draw.text((SIZE - PAD - iw, SIZE - FOOTER + (FOOTER - 22) // 2),
+              info, font=_font(18, False), fill=(100, 120, 170))
 
     return img
 
