@@ -158,24 +158,40 @@ def _font(size, bold=True):
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _clean(t):
+    # Remove non-ASCII (emojis etc.) but keep readable text
     return re.sub(r"[^\x00-\x7F]+", "", t).strip()
 
 def _headline(text):
-    first = _clean(text.strip().split("\n")[0])
-    return first[:55] + ("..." if len(first) > 55 else "")
+    # Find the first line that has meaningful ASCII text (skip emoji-only lines)
+    for line in text.strip().split("\n"):
+        c = _clean(line)
+        # Strip leading punctuation/bullets that might remain
+        c = re.sub(r"^[\s\-•*#>|]+", "", c).strip()
+        if len(c) > 8:
+            return c[:55] + ("..." if len(c) > 55 else "")
+    return "David Web Solution"
 
 def _bullets(text):
     out = []
-    for line in text.split("\n")[1:]:
+    lines = text.strip().split("\n")
+    for line in lines[1:]:
+        # Strip bullets, numbers, emojis
         c = _clean(re.sub(r"^[•\-*=>#0-9.]+\s*", "", line.strip()))
-        if c and len(c) > 6 and not c.startswith("http"):
-            out.append(c[:48])
+        c = re.sub(r"^[\s\-•*#>|]+", "", c).strip()
+        if c and len(c) > 8 and not c.startswith("http") and not c.startswith("#"):
+            out.append(c[:52])
         if len(out) >= 4:
             break
     if not out:
-        out = [_clean(l.strip())[:48] for l in text.split("\n")[1:7]
-               if len(_clean(l.strip())) > 8][:4]
-    return out
+        # Fallback: extract sentences from body
+        for line in lines:
+            c = _clean(line.strip())
+            c = re.sub(r"^[\s\-•*#>|0-9.]+", "", c).strip()
+            if len(c) > 12 and not c.startswith("http") and not c.startswith("#"):
+                out.append(c[:52])
+            if len(out) >= 4:
+                break
+    return out or ["WordPress Experts", "SEO Specialists", "AI Video & UGC Ads", "Flutter Apps"]
 
 def _wrap(text, font, max_w, draw, max_lines=3):
     lines, cur = [], ""
@@ -317,12 +333,38 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
             [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=20, fill=255)
         img.paste(ph, (PHOTO_X0, PHOTO_Y0), mask)
         draw = ImageDraw.Draw(img)
-        # Color accent corner top-left of photo
         draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 32, PHOTO_Y0 + 8], fill=color)
         draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 8, PHOTO_Y0 + 32], fill=color)
     else:
-        draw.rounded_rectangle([PHOTO_X0, PHOTO_Y0, PHOTO_X0 + PHOTO_W, PHOTO_Y1],
-                                radius=20, fill=GRAY)
+        # Branded gradient panel — looks intentional, not a placeholder
+        panel = Image.new("RGB", (PHOTO_W, PHOTO_H), color)
+        _grad(panel, 0, 0, PHOTO_W, PHOTO_H, color, _dim(color, 70))
+        pd = ImageDraw.Draw(panel)
+        # Decorative circles
+        for rad, opa in [(200, 20), (140, 35), (75, 55)]:
+            pd.ellipse([PHOTO_W // 2 - rad, PHOTO_H // 2 - rad,
+                        PHOTO_W // 2 + rad, PHOTO_H // 2 + rad],
+                       outline=tuple(min(255, c + opa) for c in color), width=2)
+        # Center: large intro label
+        fc = _font(46)
+        tw = pd.textbbox((0, 0), intro_label, font=fc)[2]
+        pd.text(((PHOTO_W - tw) // 2, PHOTO_H // 2 - 60), intro_label, font=fc, fill=WHITE)
+        # Underline
+        pd.rectangle([(PHOTO_W - 80) // 2, PHOTO_H // 2 + 0,
+                       (PHOTO_W + 80) // 2, PHOTO_H // 2 + 5], fill=WHITE)
+        # Website
+        fw = _font(18, False)
+        tw2 = pd.textbbox((0, 0), BRAND_WEB, font=fw)[2]
+        pd.text(((PHOTO_W - tw2) // 2, PHOTO_H // 2 + 22), BRAND_WEB, font=fw,
+                fill=tuple(min(255, c + 90) for c in color))
+        # Corner dots
+        for cx, cy in [(30, 30), (PHOTO_W - 30, 30), (30, PHOTO_H - 30), (PHOTO_W - 30, PHOTO_H - 30)]:
+            pd.ellipse([cx - 8, cy - 8, cx + 8, cy + 8], fill=WHITE)
+        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=20, fill=255)
+        img.paste(panel, (PHOTO_X0, PHOTO_Y0), mask)
+        draw = ImageDraw.Draw(img)
 
     # ── Left text content
     y = CONTENT_Y
@@ -447,8 +489,29 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
         draw.ellipse([PHOTO_X0 - 14, PHOTO_Y0 - 14, PHOTO_X0 + 14, PHOTO_Y0 + 14],
                      fill=color)
     else:
-        draw.rounded_rectangle([PHOTO_X0, PHOTO_Y0, PHOTO_X1, PHOTO_Y1],
-                                radius=22, fill=_dim(color, 80))
+        panel = Image.new("RGB", (PHOTO_W, PHOTO_H), _dim(color, 60))
+        _grad(panel, 0, 0, PHOTO_W, PHOTO_H, _dim(color, 80), _dim(color, 30))
+        pd = ImageDraw.Draw(panel)
+        for rad, opa in [(200, 18), (135, 30), (70, 50)]:
+            pd.ellipse([PHOTO_W // 2 - rad, PHOTO_H // 2 - rad,
+                        PHOTO_W // 2 + rad, PHOTO_H // 2 + rad],
+                       outline=tuple(min(255, c + opa) for c in color), width=2)
+        fc = _font(46)
+        tw = pd.textbbox((0, 0), intro_label, font=fc)[2]
+        pd.text(((PHOTO_W - tw) // 2, PHOTO_H // 2 - 60), intro_label, font=fc, fill=WHITE)
+        pd.rectangle([(PHOTO_W - 80) // 2, PHOTO_H // 2 + 0,
+                       (PHOTO_W + 80) // 2, PHOTO_H // 2 + 5], fill=color)
+        fw = _font(18, False)
+        tw2 = pd.textbbox((0, 0), BRAND_WEB, font=fw)[2]
+        pd.text(((PHOTO_W - tw2) // 2, PHOTO_H // 2 + 22), BRAND_WEB, font=fw,
+                fill=_light(color, 80))
+        for cx, cy in [(30, 30), (PHOTO_W - 30, 30), (30, PHOTO_H - 30), (PHOTO_W - 30, PHOTO_H - 30)]:
+            pd.ellipse([cx - 8, cy - 8, cx + 8, cy + 8], fill=color)
+        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=22, fill=255)
+        img.paste(panel, (PHOTO_X0, PHOTO_Y0), mask)
+        draw = ImageDraw.Draw(img)
 
     # ── Left text area
     TEXT_W = PHOTO_X0 - PAD - GAP

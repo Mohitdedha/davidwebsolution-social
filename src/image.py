@@ -85,7 +85,7 @@ def _fetch_picsum() -> bytes | None:
 def get_image(pillar: str, post_text: str) -> bytes | None:
     # 1. Fetch a real photo to composite into the design
     query = random.choice(PILLAR_QUERIES.get(pillar, ["web development agency"]))
-    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query) or _fetch_picsum()
+    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query)
     if photo_bytes:
         print(f"[IMAGE] Photo fetched for: {query}")
     else:
