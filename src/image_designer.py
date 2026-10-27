@@ -1001,10 +1001,10 @@ def _tpl_what_we_build(hl, bullets, cta, color, photo=None, intro_label="WE OFFE
         # Title
         ft  = _font(30)
         draw.text((PAD, ry+18), title, font=ft, fill=WHITE)
-        # Description
+        # Description — use full row width (number badge is decorative bg)
         fd  = _font(21, False)
         dy2 = ry + 58
-        for dl in _wrap(desc, fd, W-PAD-nw_-PAD-20, draw, 2):
+        for dl in _wrap(desc, fd, W - PAD - 24, draw, 2):
             draw.text((PAD, dy2), dl, font=fd, fill=MUTED); dy2 += 28
         # Thin divider
         if idx < 3:
