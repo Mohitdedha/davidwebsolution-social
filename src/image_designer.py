@@ -172,25 +172,31 @@ def _headline(text):
     return "David Web Solution"
 
 def _bullets(text):
-    out = []
     lines = text.strip().split("\n")
+
+    # PASS 1: prefer lines that explicitly start with a bullet/number marker
+    out = []
     for line in lines[1:]:
-        # Strip bullets, numbers, emojis
-        c = _clean(re.sub(r"^[•\-*=>#0-9.]+\s*", "", line.strip()))
-        c = re.sub(r"^[\s\-•*#>|]+", "", c).strip()
-        if c and len(c) > 8 and not c.startswith("http") and not c.startswith("#"):
-            out.append(c[:52])
+        raw = line.strip()
+        if re.match(r"^[•\-*]\s+|^\d+[.)]\s+", raw):
+            c = _clean(re.sub(r"^[•\-*=>#0-9.)]+\s*", "", raw))
+            c = c.strip()
+            if len(c) > 6 and not c.startswith("http") and not c.startswith("#"):
+                out.append(c[:52])
         if len(out) >= 4:
             break
+
+    # PASS 2: if no bullet lines found, grab short punchy sentences (not the long intro)
     if not out:
-        # Fallback: extract sentences from body
-        for line in lines:
-            c = _clean(line.strip())
-            c = re.sub(r"^[\s\-•*#>|0-9.]+", "", c).strip()
-            if len(c) > 12 and not c.startswith("http") and not c.startswith("#"):
+        for line in lines[1:]:
+            c = _clean(re.sub(r"^[•\-*=>#0-9.)]+\s*", "", line.strip()))
+            c = c.strip()
+            # skip hashtag lines, urls, and long run-on sentences (>90 chars)
+            if len(c) > 8 and len(c) < 90 and not c.startswith("http") and not c.startswith("#"):
                 out.append(c[:52])
             if len(out) >= 4:
                 break
+
     return out or ["WordPress Experts", "SEO Specialists", "AI Video & UGC Ads", "Flutter Apps"]
 
 def _wrap(text, font, max_w, draw, max_lines=3):
@@ -421,12 +427,15 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
     draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
     BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
-    _btn(draw, PAD, BTN_Y, 286, 52, color, cta, _font(22), WHITE)
+    btn_font = _font(20)
+    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 56
+    btn_w = max(220, min(btn_w, 340))
+    _btn(draw, PAD, BTN_Y, btn_w, 52, color, cta, btn_font, WHITE)
 
-    INFO_X = PAD + 306
+    INFO_X = PAD + btn_w + 24
     footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
     draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
-              footer_text, font=_font(22, False), fill=(190, 200, 230))
+              footer_text, font=_font(20, False), fill=(190, 200, 230))
 
     return img
 
@@ -575,12 +584,15 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
     draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
     BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
-    _btn(draw, PAD, BTN_Y, 272, 52, color, cta, _font(22), WHITE)
+    btn_font = _font(20)
+    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 56
+    btn_w = max(220, min(btn_w, 340))
+    _btn(draw, PAD, BTN_Y, btn_w, 52, color, cta, btn_font, WHITE)
 
-    INFO_X = PAD + 292
+    INFO_X = PAD + btn_w + 24
     footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
     draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
-              footer_text, font=_font(22, False), fill=(190, 200, 240))
+              footer_text, font=_font(20, False), fill=(190, 200, 240))
 
     return img
 
