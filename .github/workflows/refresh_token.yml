@@ -1,0 +1,33 @@
+name: Auto-Refresh Facebook Page Token
+
+on:
+  schedule:
+    - cron: "0 3 * * 0"   # Every Sunday 3 AM UTC (8:30 AM IST) — weekly refresh
+  workflow_dispatch:        # Manual trigger anytime
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install requests PyNaCl
+
+      - name: Refresh Facebook Page Token
+        env:
+          FB_APP_ID:          ${{ secrets.FB_APP_ID }}
+          FB_APP_SECRET:      ${{ secrets.FB_APP_SECRET }}
+          DWS_FB_PAGE_TOKEN:  ${{ secrets.DWS_FB_PAGE_TOKEN }}
+          DWS_FB_PAGE_ID:     ${{ secrets.DWS_FB_PAGE_ID }}
+          GH_PAT:             ${{ secrets.GH_PAT }}
+          GITHUB_REPOSITORY:  ${{ github.repository }}
+        run: python scripts/refresh_token.py
