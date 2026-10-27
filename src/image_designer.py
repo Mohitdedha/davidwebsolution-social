@@ -216,7 +216,14 @@ def _wrap(text, font, max_w, draw, max_lines=3):
             cur = word
     if cur:
         lines.append(cur)
-    return lines[:max_lines]
+    result = lines[:max_lines]
+    # If text was cut, add ellipsis to last line
+    if len(lines) > max_lines and result:
+        last = result[-1]
+        while last and draw.textbbox((0, 0), last + "...", font=font)[2] > max_w:
+            last = last.rsplit(" ", 1)[0]
+        result[-1] = last + "..."
+    return result
 
 def _rr(draw, xy, r, fill, outline=None, outline_w=0):
     x0, y0, x1, y1 = xy

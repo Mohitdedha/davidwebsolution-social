@@ -28,7 +28,8 @@ print("[PHOTO] Fetching sample photo from Picsum (local test only)...")
 photo_bytes = None
 try:
     # Use a fixed seed that gives a professional/person photo for testing
-    r = requests.get("https://picsum.photos/seed/woman/1080/1350", timeout=20, allow_redirects=True)
+    # ID 1005 confirmed 200 OK — professional woman photo
+    r = requests.get("https://picsum.photos/id/1005/1080/1350", timeout=20, allow_redirects=True)
     if r.status_code == 200 and len(r.content) > 10000:
         photo_bytes = r.content
         print(f"[PHOTO] Got {len(r.content)//1024}KB")
@@ -38,13 +39,24 @@ except Exception as e:
     print(f"[PHOTO] Error: {e}")
 
 original_choice = random.choice
-for tpl_name in ["agency_split", "dark_pro"]:
-    random.choice = lambda x, t=tpl_name: t
-    img = design_post(pillar, TEST_TEXT, photo_bytes=photo_bytes)
+
+from image_designer import PILLAR_TEMPLATES, PILLAR_COLORS, PILLAR_INTRO, CTA_OPTIONS
+from image_designer import _headline, _bullets, _load_photo, _tpl_agency_split, _tpl_dark_pro
+
+import io
+hl    = _headline(TEST_TEXT)
+blts  = _bullets(TEST_TEXT)
+color = PILLAR_COLORS[pillar]
+intro = PILLAR_INTRO[pillar]
+photo = _load_photo(photo_bytes) if photo_bytes else None
+cta   = "DM us to get started"   # fixed CTA for test
+
+for tpl_name, tpl_fn in [("agency_split", _tpl_agency_split), ("dark_pro", _tpl_dark_pro)]:
+    img_obj = tpl_fn(hl, blts, cta, color, photo, intro_label=intro)
+    buf = io.BytesIO()
+    img_obj.save(buf, format="PNG")
     path = os.path.join(out_dir, f"demo_{tpl_name}.png")
     with open(path, "wb") as f:
-        f.write(img)
+        f.write(buf.getvalue())
     print(f"[OK] {tpl_name} -> {path}")
-
-random.choice = original_choice
 print("\nDone.")
