@@ -1,72 +1,152 @@
 """
 Professional branded image designer for David Web Solution.
-Generates 1080x1080 posts using Pillow — no external API needed.
-4 templates inspired by professional digital marketing agency posts.
+Generates 1080x1080 posts matching agency social media reference templates.
+Supports optional photo compositing for reference-quality designs.
 """
-import io
-import os
-import re
-import random
-from PIL import Image, ImageDraw, ImageFont
+import io, os, re, random
+from PIL import Image, ImageDraw, ImageFont, ImageEnhance, ImageFilter
 
 SIZE = 1080
+_LOGO_CACHE = None
 
-BRAND_NAME    = "David Web Solution"
-BRAND_WEB     = "davidwebsolution.com"
-BRAND_TAG     = "WordPress  |  SEO  |  AI Video  |  Flutter"
+# ── Logo ──────────────────────────────────────────────────────────────────────
+
+def _load_logo(max_w=260, max_h=80):
+    global _LOGO_CACHE
+    if _LOGO_CACHE is not None:
+        return _LOGO_CACHE
+    path = os.path.join(os.path.dirname(__file__), "logo.jpg")
+    if not os.path.exists(path):
+        return None
+    try:
+        logo = Image.open(path).convert("RGBA")
+        px = logo.load()
+        w, h = logo.size
+        for y in range(h):
+            for x in range(w):
+                r, g, b, a = px[x, y]
+                if r > 215 and g > 215 and b > 215:
+                    px[x, y] = (r, g, b, 0)
+        bb = logo.getbbox()
+        if bb:
+            logo = logo.crop(bb)
+        logo.thumbnail((max_w, max_h), Image.LANCZOS)
+        _LOGO_CACHE = logo
+        return logo
+    except Exception:
+        return None
+
+
+def _paste_logo(img, x, y, white=False):
+    logo = _load_logo()
+    if not logo:
+        return img
+    if white:
+        # Make logo white by filling non-transparent pixels
+        wlogo = Image.new("RGBA", logo.size, (0, 0, 0, 0))
+        px = logo.load()
+        wpx = wlogo.load()
+        for yy in range(logo.size[1]):
+            for xx in range(logo.size[0]):
+                r, g, b, a = px[xx, yy]
+                if a > 10:
+                    wpx[xx, yy] = (255, 255, 255, a)
+        logo = wlogo
+    base = img.convert("RGBA")
+    base.paste(logo, (x, y), logo)
+    return base.convert("RGB")
+
+
+def _load_photo(photo_bytes):
+    if not photo_bytes:
+        return None
+    try:
+        img = Image.open(io.BytesIO(photo_bytes)).convert("RGB")
+        w, h = img.size
+        s = min(w, h)
+        left = (w - s) // 2
+        top = (h - s) // 2
+        return img.crop((left, top, left + s, top + s))
+    except Exception:
+        return None
+
+
+def _fit_photo(photo, w, h):
+    pw, ph = photo.size
+    scale = max(w / pw, h / ph)
+    nw, nh = int(pw * scale), int(ph * scale)
+    photo = photo.resize((nw, nh), Image.LANCZOS)
+    left = (nw - w) // 2
+    top = (nh - h) // 2
+    return photo.crop((left, top, left + w, top + h))
+
+
+def _enhance_photo(photo, contrast=1.1, color=1.05, brightness=0.95):
+    photo = ImageEnhance.Contrast(photo).enhance(contrast)
+    photo = ImageEnhance.Color(photo).enhance(color)
+    photo = ImageEnhance.Brightness(photo).enhance(brightness)
+    return photo
+
+
+# ── Constants ─────────────────────────────────────────────────────────────────
+
+BRAND_WEB = "davidwebsolution.com"
+BRAND_TAG = "@davidwebsolution"
+BRAND_PHONE = "+91 98765 43210"
 
 CTA_OPTIONS = [
     "DM us to get started",
-    "Free consultation -> DM us",
+    "Free consultation → DM",
     "Comment GROW below",
-    "Book a free call -> DM",
-    "Link in bio",
+    "Book a free call → DM",
+    "Get a FREE quote",
 ]
 
 PILLAR_COLORS = {
-    "wordpress_tip":    (0,   115, 170),
-    "seo_tip":          (52,  168,  83),
-    "ai_video_ugc":     (124,  58, 237),
-    "web_mistake":      (220,  38,  38),
-    "client_result":    (8,   145, 178),
-    "tool_spotlight":   (217, 119,   6),
-    "industry_insight": (30,   64, 175),
+    "wordpress_tip":    (0,   115, 170),   # blue
+    "seo_tip":          (16,  160,  83),   # green
+    "ai_video_ugc":     (139,  92, 246),   # purple
+    "web_mistake":      (220,  50,  50),   # red
+    "client_result":    (234, 110,  12),   # orange
+    "tool_spotlight":   (234, 110,  12),   # orange
+    "industry_insight": (37,   99, 235),   # blue
+}
+
+PILLAR_INTRO = {
+    "wordpress_tip":    "PRO TIP",
+    "seo_tip":          "SEO TIP",
+    "ai_video_ugc":     "AI & VIDEO",
+    "web_mistake":      "AVOID THIS",
+    "client_result":    "CLIENT WIN",
+    "tool_spotlight":   "TOOL PICK",
+    "industry_insight": "INSIGHTS",
 }
 
 PILLAR_TEMPLATES = {
-    "wordpress_tip":    ["blue_pro",       "clean_light"],
-    "seo_tip":          ["gradient_dark",  "blue_pro"],
-    "ai_video_ugc":     ["dark_neon",      "gradient_dark"],
-    "web_mistake":      ["gradient_dark",  "dark_neon"],
-    "client_result":    ["blue_pro",       "clean_light"],
-    "tool_spotlight":   ["dark_neon",      "gradient_dark"],
-    "industry_insight": ["gradient_dark",  "dark_neon"],
+    "wordpress_tip":    ["dark_pro", "agency_split"],
+    "seo_tip":          ["dark_pro", "agency_split"],
+    "ai_video_ugc":     ["dark_pro", "agency_split"],
+    "web_mistake":      ["dark_pro", "agency_split"],
+    "client_result":    ["dark_pro", "agency_split"],
+    "tool_spotlight":   ["dark_pro", "agency_split"],
+    "industry_insight": ["dark_pro", "agency_split"],
 }
 
+# ── Fonts ─────────────────────────────────────────────────────────────────────
 
-# ── Font loading (Ubuntu/Actions + Windows + macOS) ──────────────────────────
-
-def _font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
-    candidates = []
-    if bold:
-        candidates = [
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
-            "/usr/share/fonts/truetype/freefont/FreeSansBold.ttf",
-            "C:/Windows/Fonts/arialbd.ttf",
-            "C:/Windows/Fonts/calibrib.ttf",
-            "/Library/Fonts/Arial Bold.ttf",
-        ]
-    else:
-        candidates = [
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
-            "/usr/share/fonts/truetype/freefont/FreeSans.ttf",
-            "C:/Windows/Fonts/arial.ttf",
-            "C:/Windows/Fonts/calibri.ttf",
-            "/Library/Fonts/Arial.ttf",
-        ]
-    for p in candidates:
+def _font(size, bold=True):
+    paths = (
+        ["/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+         "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+         "C:/Windows/Fonts/arialbd.ttf", "C:/Windows/Fonts/calibrib.ttf",
+         "C:/Windows/Fonts/segoeui.ttf"]
+        if bold else
+        ["/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+         "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+         "C:/Windows/Fonts/arial.ttf", "C:/Windows/Fonts/calibri.ttf",
+         "C:/Windows/Fonts/segoeui.ttf"]
+    )
+    for p in paths:
         if os.path.exists(p):
             try:
                 return ImageFont.truetype(p, size)
@@ -75,42 +155,36 @@ def _font(size: int, bold: bool = True) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default()
 
 
-# ── Text helpers ─────────────────────────────────────────────────────────────
+# ── Helpers ───────────────────────────────────────────────────────────────────
 
-def _clean(text: str) -> str:
-    """Remove non-ASCII characters (emoji etc)."""
-    return re.sub(r"[^\x00-\x7F]+", "", text).strip()
+def _clean(t):
+    return re.sub(r"[^\x00-\x7F]+", "", t).strip()
 
-
-def _headline(text: str) -> str:
+def _headline(text):
     first = _clean(text.strip().split("\n")[0])
-    return first[:62] + ("..." if len(first) > 62 else "")
+    return first[:55] + ("..." if len(first) > 55 else "")
 
-
-def _bullets(text: str) -> list[str]:
+def _bullets(text):
     out = []
     for line in text.split("\n")[1:]:
-        line = line.strip()
-        clean = _clean(re.sub(r"^[•\-*=>#]+\s*", "", line))
-        if clean and len(clean) > 8 and not clean.startswith("http"):
-            out.append(clean[:58])
+        c = _clean(re.sub(r"^[•\-*=>#0-9.]+\s*", "", line.strip()))
+        if c and len(c) > 6 and not c.startswith("http"):
+            out.append(c[:48])
         if len(out) >= 4:
             break
     if not out:
-        for line in text.split("\n")[1:6]:
-            clean = _clean(line.strip())
-            if clean and len(clean) > 10:
-                out.append(clean[:58])
-        out = out[:4]
+        out = [_clean(l.strip())[:48] for l in text.split("\n")[1:7]
+               if len(_clean(l.strip())) > 8][:4]
     return out
 
-
-def _wrap(text: str, font: ImageFont.FreeTypeFont, max_w: int,
-          draw: ImageDraw.ImageDraw) -> list[str]:
+def _wrap(text, font, max_w, draw, max_lines=3):
     lines, cur = [], ""
     for word in text.split():
         test = (cur + " " + word).strip()
-        w = draw.textbbox((0, 0), test, font=font)[2]
+        try:
+            w = draw.textbbox((0, 0), test, font=font)[2]
+        except Exception:
+            w = len(test) * 20
         if w <= max_w:
             cur = test
         else:
@@ -119,245 +193,357 @@ def _wrap(text: str, font: ImageFont.FreeTypeFont, max_w: int,
             cur = word
     if cur:
         lines.append(cur)
-    return lines
+    return lines[:max_lines]
 
-
-def _rr(draw: ImageDraw.ImageDraw, xy, r: int, fill):
-    """Draw a rounded rectangle."""
+def _rr(draw, xy, r, fill, outline=None, outline_w=0):
     x0, y0, x1, y1 = xy
     draw.rectangle([x0 + r, y0, x1 - r, y1], fill=fill)
     draw.rectangle([x0, y0 + r, x1, y1 - r], fill=fill)
-    draw.ellipse([x0, y0, x0 + 2*r, y0 + 2*r], fill=fill)
-    draw.ellipse([x1 - 2*r, y0, x1, y0 + 2*r], fill=fill)
-    draw.ellipse([x0, y1 - 2*r, x0 + 2*r, y1], fill=fill)
-    draw.ellipse([x1 - 2*r, y1 - 2*r, x1, y1], fill=fill)
+    for ex, ey in [(x0, y0), (x1 - 2*r, y0), (x0, y1 - 2*r), (x1 - 2*r, y1 - 2*r)]:
+        draw.ellipse([ex, ey, ex + 2*r, ey + 2*r], fill=fill)
+    if outline and outline_w:
+        draw.rounded_rectangle(xy, radius=r, outline=outline, width=outline_w)
+
+def _grad(img, x0, y0, x1, y1, c1, c2, horiz=False):
+    draw = ImageDraw.Draw(img)
+    n = (x1 - x0) if horiz else (y1 - y0)
+    for i in range(n):
+        t = i / max(n - 1, 1)
+        c = tuple(int(c1[j] + t * (c2[j] - c1[j])) for j in range(3))
+        if horiz:
+            draw.line([(x0 + i, y0), (x0 + i, y1)], fill=c)
+        else:
+            draw.line([(x0, y0 + i), (x1, y0 + i)], fill=c)
+
+def _dim(c, amt=60):
+    return tuple(max(0, v - amt) for v in c)
+
+def _light(c, amt=60):
+    return tuple(min(255, v + amt) for v in c)
+
+def _btn(draw, x, y, w, h, fill, text, font, text_color=(255, 255, 255), r=None):
+    if r is None:
+        r = h // 2
+    _rr(draw, [x, y, x + w, y + h], r, fill)
+    tb = draw.textbbox((0, 0), text, font=font)
+    tw, th = tb[2] - tb[0], tb[3] - tb[1]
+    draw.text((x + (w - tw) // 2, y + (h - th) // 2 - 1), text,
+              font=font, fill=text_color)
+
+def _color_overlay(img, x0, y0, x1, y1, color, alpha=160):
+    ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    dr = ImageDraw.Draw(ov)
+    dr.rectangle([x0, y0, x1, y1], fill=(*color, alpha))
+    base = img.convert("RGBA")
+    return Image.alpha_composite(base, ov).convert("RGB")
+
+def _grad_overlay(img, x0, y0, x1, y1, color, start_alpha=0, end_alpha=200):
+    ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    dr = ImageDraw.Draw(ov)
+    h = y1 - y0
+    for i in range(h):
+        t = i / max(h - 1, 1)
+        a = int(start_alpha + t * (end_alpha - start_alpha))
+        dr.line([(x0, y0 + i), (x1, y0 + i)], fill=(*color, a))
+    base = img.convert("RGBA")
+    return Image.alpha_composite(base, ov).convert("RGB")
 
 
-# ── Template 1: Gradient Dark ────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Template 1 — AGENCY SPLIT
+# Inspired by reference images 3 & 4:
+# White/light BG | Left: color accent strip + bold text | Right: person photo
+# Clean professional agency look
+# ═══════════════════════════════════════════════════════════════════════════════
 
-def _tpl_gradient_dark(hl: str, bullets: list, cta: str, color: tuple) -> Image.Image:
-    img = Image.new("RGB", (SIZE, SIZE), (8, 12, 28))
+def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVIDE"):
+    WHITE = (255, 255, 255)
+    DARK  = (18, 20, 35)
+    GRAY  = (240, 242, 248)
+
+    PAD   = 48          # outer horizontal padding
+    GAP   = 32          # gap between text panel and photo
+
+    img = Image.new("RGB", (SIZE, SIZE), WHITE)
     draw = ImageDraw.Draw(img)
 
-    # Background gradient bands
-    for y in range(SIZE):
-        t = y / SIZE
-        r = int(8  + t * 20)
-        g = int(12 + t * 10)
-        b = int(28 + t * 40)
-        draw.line([(0, y), (SIZE, y)], fill=(r, g, b))
+    # ── Left accent strip (full height)
+    STRIP_W = 10
+    draw.rectangle([0, 0, STRIP_W, SIZE], fill=color)
 
-    # Top-right circle accent
-    draw.ellipse([700, -120, 1180, 360], fill=(20, 40, 100))
-    draw.ellipse([760, -60,  1120, 300], fill=(8, 12, 28))
+    # ── Top color header band (full width)
+    BAND_H = 120
+    _grad(img, 0, 0, SIZE, BAND_H, _dim(color, 20), color)
+    draw = ImageDraw.Draw(img)
 
-    # Left pillar stripe
-    draw.rectangle([0, 160, 7, 760], fill=color)
+    # Decorative circles in band (top right)
+    for rad, opa in [(220, 15), (155, 25), (90, 40)]:
+        col = tuple(int(c * opa / 100 + 255 * (1 - opa / 100)) for c in color)
+        draw.ellipse([SIZE - rad, -rad // 2, SIZE + rad, rad + BAND_H // 2],
+                     outline=col, width=2)
 
-    # Brand header
-    draw.text((35, 38), BRAND_NAME.upper(), font=_font(26), fill=(255, 255, 255))
-    draw.text((35, 72), BRAND_WEB,          font=_font(20, False), fill=(100, 116, 139))
+    # Logo on band — white, vertically centered
+    logo_y = (BAND_H - 60) // 2
+    img = _paste_logo(img, PAD, logo_y, white=True)
+    draw = ImageDraw.Draw(img)
 
-    # Headline
-    fh = _font(60)
-    hl_lines = _wrap(hl, fh, 820, draw)
-    y = 170
-    for line in hl_lines[:3]:
-        draw.text((35, y), line, font=fh, fill=(255, 255, 255))
-        y += draw.textbbox((0, 0), line, font=fh)[3] + 8
+    # Social icons — top right on band, vertically centered
+    for i, ic in enumerate(["f", "ig", "in"]):
+        ix = SIZE - PAD - 36 - i * 52
+        iy = (BAND_H - 36) // 2
+        draw.ellipse([ix, iy, ix + 36, iy + 36], outline=(255, 255, 255), width=2)
+        tw = draw.textbbox((0, 0), ic, font=_font(15, False))[2]
+        draw.text((ix + (36 - tw) // 2, iy + 9), ic, font=_font(15, False), fill=(255, 255, 255))
+
+    # ── Layout constants
+    CONTENT_Y = BAND_H + 36       # top of content area
+    BOTTOM_BAR_H = 96
+    BAR_Y = SIZE - BOTTOM_BAR_H  # y where bottom bar starts
+
+    PHOTO_W = 420
+    PHOTO_X0 = SIZE - PAD - PHOTO_W
+    PHOTO_Y0 = CONTENT_Y
+    PHOTO_Y1 = BAR_Y - 24
+    PHOTO_H  = PHOTO_Y1 - PHOTO_Y0
+
+    TEXT_X = STRIP_W + PAD
+    TEXT_W = PHOTO_X0 - TEXT_X - GAP
+
+    # ── Right photo panel
+    if photo:
+        ph = _enhance_photo(_fit_photo(photo, PHOTO_W, PHOTO_H))
+        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=20, fill=255)
+        img.paste(ph, (PHOTO_X0, PHOTO_Y0), mask)
+        draw = ImageDraw.Draw(img)
+        # Color accent corner top-left of photo
+        draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 32, PHOTO_Y0 + 8], fill=color)
+        draw.rectangle([PHOTO_X0 - 8, PHOTO_Y0 - 8, PHOTO_X0 + 8, PHOTO_Y0 + 32], fill=color)
+    else:
+        draw.rounded_rectangle([PHOTO_X0, PHOTO_Y0, PHOTO_X0 + PHOTO_W, PHOTO_Y1],
+                                radius=20, fill=GRAY)
+
+    # ── Left text content
+    y = CONTENT_Y
+
+    # Intro label
+    draw.text((TEXT_X, y), intro_label, font=_font(22), fill=color)
+    y += 36
+
+    # Colored accent bar
+    draw.rectangle([TEXT_X, y, TEXT_X + 56, y + 5], fill=color)
+    y += 20
+
+    # Headline — first half dark, second half color
+    fh1 = _font(74)
+    fh2 = _font(92)
+    words = hl.split()
+    mid = max(1, len(words) // 2)
+    for part, fnt, col in [(" ".join(words[:mid]), fh1, DARK),
+                            (" ".join(words[mid:]), fh2, color)]:
+        for wl in _wrap(part, fnt, TEXT_W, draw, max_lines=2):
+            draw.text((TEXT_X, y), wl, font=fnt, fill=col)
+            y += draw.textbbox((0, 0), wl, font=fnt)[3] + 4
+
+    y += 10
+
+    # Tagline
+    draw.text((TEXT_X, y), "We Help To Grow Your Business", font=_font(20, False),
+              fill=(100, 112, 145))
+    y += 36
 
     # Divider
-    draw.rectangle([35, y + 18, 220, y + 22], fill=color)
-    y += 48
+    draw.rectangle([TEXT_X, y, TEXT_X + TEXT_W, y + 2], fill=(218, 222, 238))
+    y += 20
 
-    # Bullets
-    fb = _font(30, False)
-    for b in bullets[:4]:
-        draw.text((35, y), "->", font=_font(30), fill=color)
-        draw.text((78, y), b,    font=fb,         fill=(203, 213, 225))
-        y += 50
+    # Services label
+    draw.text((TEXT_X, y), "What We Do", font=_font(24), fill=DARK)
+    y += 40
 
-    # CTA button
-    btn_y = max(y + 36, 870)
-    _rr(draw, [35, btn_y, 390, btn_y + 58], 12, color)
-    draw.text((55, btn_y + 13), cta, font=_font(26), fill=(255, 255, 255))
+    # Numbered bullets
+    fb = _font(22, False)
+    fn = _font(30)
+    for i, bul in enumerate(bullets[:4]):
+        num = f"0{i + 1}"
+        draw.text((TEXT_X, y), num, font=fn, fill=color)
+        nw = draw.textbbox((0, 0), num, font=fn)[2]
+        draw.text((TEXT_X + nw + 12, y + 4), bul, font=fb, fill=(28, 38, 62))
+        y += 46
+        if i < 3:
+            draw.rectangle([TEXT_X, y, TEXT_X + TEXT_W - 8, y + 1], fill=(228, 232, 246))
+            y += 10
 
-    # Footer
-    draw.text((35, 1024), BRAND_TAG, font=_font(20, False), fill=(51, 65, 85))
+    # ── Bottom bar
+    draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=DARK)
+    draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
-    return img
+    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
+    _btn(draw, PAD, BTN_Y, 286, 52, color, cta, _font(22), WHITE)
 
-
-# ── Template 2: Blue Professional ────────────────────────────────────────────
-
-def _tpl_blue_pro(hl: str, bullets: list, cta: str, color: tuple) -> Image.Image:
-    img = Image.new("RGB", (SIZE, SIZE), color)
-    draw = ImageDraw.Draw(img)
-
-    # Decorative circles on blue section
-    r, g, b = color
-    lighter = (min(255, r + 40), min(255, g + 40), min(255, b + 40))
-    draw.ellipse([-80, -80, 300, 300], fill=lighter)
-    draw.ellipse([820, -50, 1140, 270], fill=lighter)
-
-    # White card (lower 62%)
-    card_top = 390
-    draw.rectangle([0, card_top, SIZE, SIZE], fill=(255, 255, 255))
-
-    # Brand on colored top
-    draw.text((48, 42), BRAND_NAME.upper(), font=_font(26),      fill=(255, 255, 255))
-    draw.text((48, 76), "AGENCY TIP",       font=_font(20, False), fill=(220, 235, 255))
-
-    # Headline on blue
-    fh = _font(62)
-    hl_lines = _wrap(hl, fh, 800, draw)
-    y = 155
-    for line in hl_lines[:3]:
-        draw.text((48, y), line, font=fh, fill=(255, 255, 255))
-        y += draw.textbbox((0, 0), line, font=fh)[3] + 8
-
-    # Bullets on white
-    y = card_top + 40
-    fb = _font(30, False)
-    for bul in bullets[:4]:
-        draw.ellipse([48, y + 10, 64, y + 26], fill=color)
-        draw.text((80, y), bul, font=fb, fill=(30, 41, 59))
-        y += 52
-
-    # CTA
-    btn_y = max(y + 28, 880)
-    _rr(draw, [48, btn_y, 420, btn_y + 62], 14, color)
-    draw.text((72, btn_y + 14), cta, font=_font(26), fill=(255, 255, 255))
-
-    # Footer
-    draw.text((48, 1024), BRAND_WEB, font=_font(22, False), fill=(148, 163, 184))
+    INFO_X = PAD + 306
+    draw.text((INFO_X, BAR_Y + 18), BRAND_PHONE,
+              font=_font(18, False), fill=(165, 178, 215))
+    draw.text((INFO_X, BAR_Y + 44), BRAND_WEB,
+              font=_font(18, False), fill=(115, 130, 175))
 
     return img
 
 
-# ── Template 3: Dark Neon ────────────────────────────────────────────────────
+# ═══════════════════════════════════════════════════════════════════════════════
+# Template 2 — DARK PRO
+# Inspired by reference images 1, 2 & 5:
+# Dark gradient BG | Left: bold headline + list | Right: person photo prominent
+# Gold/color accents, high contrast professional look
+# ═══════════════════════════════════════════════════════════════════════════════
 
-def _tpl_dark_neon(hl: str, bullets: list, cta: str, color: tuple) -> Image.Image:
-    img = Image.new("RGB", (SIZE, SIZE), (3, 7, 18))
+def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
+    DARK  = (10, 12, 28)
+    DARK2 = (16, 18, 40)
+    WHITE = (255, 255, 255)
+
+    PAD  = 48           # outer padding
+    GAP  = 28           # gap between text and photo
+    LINE_GAP = 10       # extra space between text lines
+
+    img = Image.new("RGB", (SIZE, SIZE), DARK)
+    _grad(img, 0, 0, SIZE // 2, SIZE, DARK2, DARK)
     draw = ImageDraw.Draw(img)
 
-    # Subtle grid
-    for x in range(0, SIZE, 108):
-        draw.line([(x, 0), (x, SIZE)], fill=(16, 24, 40), width=1)
-    for y in range(0, SIZE, 108):
-        draw.line([(0, y), (SIZE, y)], fill=(16, 24, 40), width=1)
+    # Decorative background circles (top-right)
+    for rad in [420, 320, 220]:
+        alpha = 12 if rad == 420 else (20 if rad == 320 else 35)
+        col = tuple(int(c * alpha / 100 + DARK[i] * (1 - alpha / 100))
+                    for i, c in enumerate(color))
+        draw.ellipse([SIZE - rad - 60, -rad // 3, SIZE + rad - 60, rad * 4 // 3],
+                     outline=col, width=2)
 
-    # Top neon bar
-    draw.rectangle([0, 0, SIZE, 7], fill=color)
+    # ── Top bar
+    draw.rectangle([0, 0, SIZE, 6], fill=color)
 
-    # Brand
-    draw.text((40, 24), BRAND_NAME, font=_font(26),      fill=color)
-    draw.text((40, 58), BRAND_WEB,  font=_font(18, False), fill=(55, 65, 81))
+    # ── Layout constants
+    BOTTOM_BAR_H = 96
+    BAR_Y = SIZE - BOTTOM_BAR_H
 
-    # Headline (2 colors)
-    fh = _font(62)
-    hl_lines = _wrap(hl, fh, 860, draw)
-    y = 130
-    for i, line in enumerate(hl_lines[:3]):
-        col = (255, 255, 255) if i == 0 else color
-        draw.text((40, y), line, font=fh, fill=col)
-        y += draw.textbbox((0, 0), line, font=fh)[3] + 8
+    PHOTO_X0 = SIZE // 2 + 20
+    PHOTO_Y0 = PAD + 56          # below logo row
+    PHOTO_X1 = SIZE - PAD
+    PHOTO_Y1 = BAR_Y - 20
+    PHOTO_W  = PHOTO_X1 - PHOTO_X0
+    PHOTO_H  = PHOTO_Y1 - PHOTO_Y0
 
+    # ── Photo right panel
+    if photo:
+        ph = _enhance_photo(_fit_photo(photo, PHOTO_W, PHOTO_H),
+                            contrast=1.1, brightness=0.97)
+        mask = Image.new("L", (PHOTO_W, PHOTO_H), 0)
+        ImageDraw.Draw(mask).rounded_rectangle(
+            [(0, 0), (PHOTO_W - 1, PHOTO_H - 1)], radius=22, fill=255)
+        img.paste(ph, (PHOTO_X0, PHOTO_Y0), mask)
+        draw = ImageDraw.Draw(img)
+        # Corner accent bottom-right
+        draw.rectangle([PHOTO_X1 - 48, PHOTO_Y1, PHOTO_X1, PHOTO_Y1 + 6], fill=color)
+        draw.rectangle([PHOTO_X1, PHOTO_Y1 - 48, PHOTO_X1 + 6, PHOTO_Y1 + 6], fill=color)
+        # Dot accent top-left
+        draw.ellipse([PHOTO_X0 - 14, PHOTO_Y0 - 14, PHOTO_X0 + 14, PHOTO_Y0 + 14],
+                     fill=color)
+    else:
+        draw.rounded_rectangle([PHOTO_X0, PHOTO_Y0, PHOTO_X1, PHOTO_Y1],
+                                radius=22, fill=_dim(color, 80))
+
+    # ── Left text area
+    TEXT_W = PHOTO_X0 - PAD - GAP
+
+    # Logo top-left (white)
+    img = _paste_logo(img, PAD, (PAD + 56 - 60) // 2 + 8, white=True)
+    draw = ImageDraw.Draw(img)
+
+    # Social icons top-right
+    for i, ic in enumerate(["f", "ig", "in"]):
+        ix = SIZE - PAD - 34 - i * 50
+        iy = (PAD + 56 - 34) // 2 + 8
+        draw.ellipse([ix, iy, ix + 34, iy + 34], outline=(80, 92, 132), width=2)
+        tw = draw.textbbox((0, 0), ic, font=_font(14, False))[2]
+        draw.text((ix + (34 - tw) // 2, iy + 8), ic,
+                  font=_font(14, False), fill=(130, 148, 188))
+
+    # Intro label pill
+    y = PHOTO_Y0 + 4
+    intro_w = draw.textbbox((0, 0), intro_label, font=_font(24))[2] + 44
+    _rr(draw, [PAD, y, PAD + intro_w, y + 42], 21, color)
+    draw.text((PAD + 22, y + 8), intro_label, font=_font(24), fill=WHITE)
+    y += 62
+
+    # Big headline — first half big white, second half medium color
+    fh_big = _font(96)
+    fh_med = _font(70)
+    words = hl.split()
+    mid = max(1, len(words) // 2)
+    for part, fnt, col in [(" ".join(words[:mid]), fh_big, WHITE),
+                            (" ".join(words[mid:]), fh_med, color)]:
+        for line in _wrap(part, fnt, TEXT_W, draw, max_lines=2):
+            draw.text((PAD, y), line, font=fnt, fill=col)
+            y += draw.textbbox((0, 0), line, font=fnt)[3] + LINE_GAP
+
+    # Accent sub-text
+    y += 6
+    draw.text((PAD, y), "for your business", font=_font(26, False),
+              fill=_light(color, 55))
+    y += 46
+
+    # Thick underline
+    draw.rectangle([PAD, y, PAD + 180, y + 6], fill=color)
     y += 28
 
-    # Service boxes 2x2 grid
-    fw = _font(24, False)
-    for i, bul in enumerate(bullets[:4]):
-        bx = 40  + (i % 2) * 512
-        by = y   + (i // 2) * 108
-        _rr(draw, [bx, by, bx + 488, by + 88], 10, (12, 22, 42))
-        draw.rectangle([bx, by, bx + 5, by + 88], fill=color)
-        draw.text((bx + 20, by + 26), bul[:36], font=fw, fill=(203, 213, 225))
-
-    y += 248
-
-    # CTA
-    btn_y = max(y + 14, 882)
-    _rr(draw, [40, btn_y, 430, btn_y + 62], 14, color)
-    draw.text((64, btn_y + 14), cta, font=_font(26), fill=(3, 7, 18))
-
-    # Footer
-    draw.text((40, 1024), BRAND_TAG, font=_font(20, False), fill=(55, 65, 81))
-
-    return img
-
-
-# ── Template 4: Clean Light ──────────────────────────────────────────────────
-
-def _tpl_clean_light(hl: str, bullets: list, cta: str, color: tuple) -> Image.Image:
-    img = Image.new("RGB", (SIZE, SIZE), (248, 250, 252))
-    draw = ImageDraw.Draw(img)
-
-    # Top band
-    draw.rectangle([0, 0, SIZE, 175], fill=color)
-
-    # Decorative circle top-right
-    r, g, b = color
-    lighter = (min(255, r + 40), min(255, g + 40), min(255, b + 40))
-    draw.ellipse([830, -60, 1130, 240], fill=lighter)
-
-    # Brand on band
-    draw.text((44, 34),  BRAND_NAME.upper(), font=_font(26),      fill=(255, 255, 255))
-    draw.text((44, 68),  BRAND_TAG,          font=_font(17, False), fill=(220, 235, 255))
-
-    # White card
-    draw.rectangle([24, 148, SIZE - 24, SIZE - 24], fill=(255, 255, 255))
-
-    # Headline in card
-    fh = _font(54)
-    hl_lines = _wrap(hl, fh, 920, draw)
-    y = 185
-    for line in hl_lines[:3]:
-        draw.text((52, y), line, font=fh, fill=(15, 23, 42))
-        y += draw.textbbox((0, 0), line, font=fh)[3] + 6
-
-    draw.rectangle([52, y + 14, 52 + 90, y + 18], fill=color)
+    # Services header
+    draw.text((PAD, y), "Our Services", font=_font(26), fill=(200, 210, 240))
     y += 44
 
-    # Bullets with colored squares
-    fb = _font(30, False)
+    # Bullet list
+    fb = _font(23, False)
     for bul in bullets[:4]:
-        _rr(draw, [52, y + 6, 74, y + 28], 4, color)
-        draw.text((90, y), bul, font=fb, fill=(30, 41, 59))
-        y += 54
+        draw.rectangle([PAD, y + 8, PAD + 8, y + 22], fill=color)
+        draw.text((PAD + 22, y), bul, font=fb, fill=(168, 184, 222))
+        y += 44
+        if y > BAR_Y - 50:
+            break
 
-    # CTA
-    btn_y = max(y + 28, 886)
-    _rr(draw, [52, btn_y, 440, btn_y + 62], 14, color)
-    draw.text((76, btn_y + 14), cta, font=_font(26), fill=(255, 255, 255))
+    # ── Bottom info bar
+    draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=(14, 16, 34))
+    draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
-    # Footer line
-    draw.rectangle([24, 1010, SIZE - 24, 1011], fill=(226, 232, 240))
-    draw.text((52, 1018), BRAND_WEB, font=_font(22, False), fill=(148, 163, 184))
+    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
+    _btn(draw, PAD, BTN_Y, 272, 52, color, cta, _font(22), WHITE)
+
+    INFO_X = PAD + 292
+    draw.text((INFO_X, BAR_Y + 16), BRAND_PHONE,
+              font=_font(18, False), fill=(148, 164, 208))
+    draw.text((INFO_X, BAR_Y + 44), BRAND_WEB,
+              font=_font(18, False), fill=(100, 118, 170))
 
     return img
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
-def design_post(pillar: str, post_text: str) -> bytes:
+def design_post(pillar: str, post_text: str, photo_bytes: bytes = None) -> bytes:
     """Generate a branded 1080x1080 image. Returns PNG bytes."""
-    hl      = _headline(post_text)
-    blts    = _bullets(post_text)
-    cta     = random.choice(CTA_OPTIONS)
-    color   = PILLAR_COLORS.get(pillar, (37, 99, 235))
-    tpls    = PILLAR_TEMPLATES.get(pillar, ["gradient_dark", "blue_pro"])
-    tpl     = random.choice(tpls)
+    hl    = _headline(post_text)
+    blts  = _bullets(post_text)
+    cta   = random.choice(CTA_OPTIONS)
+    color = PILLAR_COLORS.get(pillar, (234, 110, 12))
+    tpls  = PILLAR_TEMPLATES.get(pillar, ["agency_split", "dark_pro"])
+    tpl   = random.choice(tpls)
+    intro = PILLAR_INTRO.get(pillar, "WE OFFER")
 
-    dispatch = {
-        "gradient_dark": _tpl_gradient_dark,
-        "blue_pro":      _tpl_blue_pro,
-        "dark_neon":     _tpl_dark_neon,
-        "clean_light":   _tpl_clean_light,
-    }
-    img = dispatch[tpl](hl, blts, cta, color)
+    photo = _load_photo(photo_bytes) if photo_bytes else None
+
+    if tpl == "agency_split":
+        img = _tpl_agency_split(hl, blts, cta, color, photo, intro_label=intro)
+    else:
+        img = _tpl_dark_pro(hl, blts, cta, color, photo, intro_label=intro)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)
-    print(f"[DESIGN] Template={tpl} pillar={pillar} size={buf.tell()//1024}KB")
+    print(f"[DESIGN] tpl={tpl} pillar={pillar} photo={'yes' if photo else 'no'} {buf.tell()//1024}KB")
     return buf.getvalue()

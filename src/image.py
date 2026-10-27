@@ -83,18 +83,26 @@ def _fetch_picsum() -> bytes | None:
 
 
 def get_image(pillar: str, post_text: str) -> bytes | None:
-    # 1. Branded designed graphic (primary — always use this)
-    img = _design(pillar, post_text)
-    if img:
-        print(f"[IMAGE] Designed branded graphic for pillar={pillar}")
-        return img
-
-    # 2. Photo fallback (if designer fails)
+    # 1. Fetch a real photo to composite into the design
     query = random.choice(PILLAR_QUERIES.get(pillar, ["web development agency"]))
-    img = _fetch_pexels(query) or _fetch_unsplash(query) or _fetch_picsum()
-    if img:
-        print(f"[IMAGE] Photo fallback: {query}")
-    return img
+    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query)
+    if photo_bytes:
+        print(f"[IMAGE] Photo fetched: {query}")
+    else:
+        print(f"[IMAGE] No photo found for query: {query}, using geometric design")
+
+    # 2. Generate branded design (with or without real photo)
+    try:
+        from image_designer import design_post
+        img = design_post(pillar, post_text, photo_bytes=photo_bytes)
+        if img:
+            print(f"[IMAGE] Branded design ready for pillar={pillar}")
+            return img
+    except Exception as e:
+        print(f"[IMAGE] Designer error: {e}")
+
+    # 3. Last resort: raw photo or picsum
+    return photo_bytes or _fetch_picsum()
 
 
 def upload_to_imgbb(img_bytes: bytes, filename: str) -> str | None:
