@@ -1,13 +1,14 @@
 """
 Image provider for David Web Solution posts.
 Primary: Pillow-based designed graphic (always works).
-Photo sources: Pexels -> Unsplash API -> Unsplash Source (free, no key)
+Photo sources: Pixabay -> Pexels -> Unsplash API
 """
 import os
 import random
 import requests
 import base64
 
+PIXABAY_KEY  = os.environ.get("PIXABAY_API_KEY", "")
 PEXELS_KEY   = os.environ.get("PEXELS_API_KEY", "")
 UNSPLASH_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 IMGBB_KEY    = os.environ.get("IMGBB_API_KEY", "")
@@ -43,6 +44,34 @@ def _design(pillar: str, post_text: str) -> bytes | None:
     except Exception as e:
         print(f"[IMAGE] Designer error: {e}")
         return None
+
+
+def _fetch_pixabay(query: str) -> bytes | None:
+    if not PIXABAY_KEY:
+        return None
+    try:
+        r = requests.get(
+            "https://pixabay.com/api/",
+            params={
+                "key": PIXABAY_KEY,
+                "q": query,
+                "image_type": "photo",
+                "orientation": "vertical",
+                "per_page": 10,
+                "safesearch": "true",
+            },
+            timeout=15,
+        )
+        if r.status_code == 200:
+            hits = r.json().get("hits", [])
+            if hits:
+                url = random.choice(hits)["largeImageURL"]
+                img_r = requests.get(url, timeout=20)
+                if img_r.status_code == 200:
+                    return img_r.content
+    except Exception as e:
+        print(f"[IMAGE] Pixabay error: {e}")
+    return None
 
 
 def _fetch_pexels(query: str) -> bytes | None:
@@ -104,7 +133,7 @@ def _fetch_unsplash_source(pillar: str) -> bytes | None:
 def get_image(pillar: str, post_text: str) -> bytes | None:
     # 1. Fetch a real photo to composite into the design
     query = random.choice(PILLAR_QUERIES.get(pillar, ["web development agency"]))
-    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query) or _fetch_unsplash_source(pillar)
+    photo_bytes = _fetch_pixabay(query) or _fetch_pexels(query) or _fetch_unsplash(query)
     if photo_bytes:
         print(f"[IMAGE] Photo fetched for: {query}")
     else:
