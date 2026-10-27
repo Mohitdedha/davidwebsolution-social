@@ -34,41 +34,71 @@ CONTENT_PILLARS = [
 ]
 
 PILLAR_PROMPTS = {
-    "wordpress_tip": """Write a short, punchy social media post (150-200 words) about a practical WordPress tip for small business owners in the US or UK.
-Topic ideas: speed optimisation, security, SEO plugins, WooCommerce, page builders, backups, custom post types, staging sites.
-Tone: friendly expert. No fluff. Start with a strong hook line.
-End with: 1 clear call-to-action (DM us / comment below / link in bio).
-Add 5-7 relevant hashtags on a new line.""",
+    "wordpress_tip": """Write a punchy, value-packed social media post (120-160 words) sharing ONE specific WordPress tip for small business owners in the US or UK.
 
-    "seo_tip": """Write a short social media post (150-200 words) sharing one specific SEO tip that helps a UK or US local business rank higher on Google.
-Topic ideas: Google Business Profile, Core Web Vitals, schema markup, internal linking, meta descriptions, E-E-A-T, local citations, image alt text.
-Tone: direct, no jargon unless explained. Start with a hook.
-End with a CTA and 5-7 hashtags.""",
+Rules:
+- Start with a bold hook (problem or surprising fact)
+- Give 3-5 concrete, actionable bullet points
+- Each bullet = one specific fix, not vague advice
+- End with ONE clear CTA (DM us / comment SPEED below / link in bio)
+- NO hashtags. NO emojis. Plain text only.
+- Write like you are talking to a business owner, not a developer
 
-    "ai_video_ugc": """Write a social media post (150-200 words) about AI video or UGC ads for businesses.
-Topic ideas: how AI-generated UGC ads outperform traditional ads, tools we use (HeyGen, ElevenLabs, Runway), cost savings, client results, how to brief a UGC creator.
-Tone: forward-thinking, exciting. Target US/UK e-commerce or service businesses.
-Hook first, then value, then CTA + 5-7 hashtags.""",
+Topic ideas: speed optimisation, security, caching plugins, image compression, staging sites, WooCommerce tips.""",
 
-    "web_mistake": """Write a social media post (150-200 words) about a common website mistake that costs businesses money or leads.
-Topic ideas: slow load time, no SSL, no mobile version, unclear CTA, stock photos, missing contact info, no Google Analytics, bad navigation.
-Tone: slightly alarming but helpful. Hook: "Most [business type] websites make this mistake..."
-End with CTA + 5-7 hashtags.""",
+    "seo_tip": """Write a punchy social media post (120-160 words) sharing ONE specific SEO tip for UK or US local businesses.
 
-    "client_result": """Write a social media post (150-200 words) as a web agency sharing a (realistic, hypothetical) client win.
-Example: "We rebuilt a UK plumber's website last month. Load time dropped from 8s to 1.2s. Enquiries up 40% in 30 days."
-Keep it specific with numbers. Don't name the client. Tone: proud but humble.
-End with CTA (want results like this? DM us) + 5-7 hashtags.""",
+Rules:
+- Hook first: surprising stat or common mistake
+- 3-5 specific bullet points with real actions (not "optimise your site")
+- End with ONE CTA (DM us FREE / comment SEO)
+- NO hashtags. NO emojis. Plain text only.
+- Be specific: mention exact tools, numbers, timelines
 
-    "tool_spotlight": """Write a social media post (150-200 words) spotlighting one tool we use in our web/SEO/AI workflow.
-Pick one: Elementor Pro, WP Rocket, Rank Math, Ahrefs, Canva Pro, HeyGen, ElevenLabs, Figma, Semrush, GTmetrix, Cloudflare, Gravity Forms.
-Share: what it does, why we love it, one tip for using it. Tone: knowledgeable peer.
-End with CTA + 5-7 hashtags.""",
+Topic ideas: Google Business Profile, Core Web Vitals, local citations, review strategy, page speed.""",
 
-    "industry_insight": """Write a social media post (150-200 words) sharing an insight or trend about web development, SEO or digital marketing relevant to US/UK businesses in 2025.
-Topic ideas: AI in web design, voice search, Core Web Vitals update, cookie-less tracking, video SEO, mobile-first indexing.
-Tone: thought leader. Start with a surprising stat or bold claim.
-End with CTA + 5-7 hashtags.""",
+    "ai_video_ugc": """Write a social media post (120-160 words) about how AI video or UGC ads can help US/UK businesses get more customers.
+
+Rules:
+- Hook: bold claim or result (e.g. "AI ads are 3x cheaper than traditional video")
+- 3-4 bullet points with real value (tools, costs, results)
+- ONE CTA at the end
+- NO hashtags. NO emojis. Plain text only.""",
+
+    "web_mistake": """Write a social media post (120-160 words) about one costly website mistake that business owners make.
+
+Rules:
+- Hook: "Most [type] business websites are losing leads because of this..."
+- List 4-5 specific mistakes with real consequences (lost revenue, Google penalty, etc.)
+- End: "We fix all of this — DM AUDIT for a free check"
+- NO hashtags. NO emojis. Plain text only.
+- Be specific: mention numbers, real tools, real impact.""",
+
+    "client_result": """Write a social media post (120-160 words) sharing a realistic client result story.
+
+Rules:
+- One specific scenario: plumber, restaurant, dentist, solicitor, e-commerce store in UK or US
+- Real numbers: before/after load time, enquiry increase %, revenue gained
+- 3-4 bullet points of what was done
+- End: "Want results like this? DM us RESULT"
+- NO hashtags. NO emojis. Plain text only. Do not name the client.""",
+
+    "tool_spotlight": """Write a social media post (120-160 words) spotlighting one specific tool from our agency workflow.
+
+Rules:
+- Pick one tool: WP Rocket, Rank Math, Ahrefs, HeyGen, ElevenLabs, Figma, Semrush, GTmetrix, Cloudflare
+- Explain: what it does in one line, why we use it, one pro tip
+- End with CTA
+- NO hashtags. NO emojis. Plain text only.""",
+
+    "industry_insight": """Write a social media post (120-160 words) about one important trend in web, SEO or digital marketing for 2025.
+
+Rules:
+- Open with a surprising stat or bold claim
+- 3-4 bullet points explaining what it means for business owners
+- Tell them what to do about it
+- End with CTA
+- NO hashtags. NO emojis. Plain text only.""",
 }
 
 IMAGE_PROMPTS = {
@@ -112,8 +142,14 @@ def generate_post(pillar: str | None = None) -> dict:
 
     import re
     text = response.choices[0].message.content.strip()
-    # Strip markdown bold/italic markers that LLMs sometimes add
+    # Strip markdown bold/italic markers
     text = re.sub(r'\*{1,3}([^*]+)\*{1,3}', r'\1', text)
+    # Remove all hashtag lines and inline hashtags
+    text = re.sub(r'#\w+', '', text)
+    # Remove lines that are now empty or just whitespace/punctuation
+    lines = [l.rstrip() for l in text.splitlines()]
+    lines = [l for l in lines if l.strip() and not all(c in ' |,-.' for c in l.strip())]
+    text = '\n'.join(lines).strip()
     image_prompt = IMAGE_PROMPTS.get(pillar, "Professional web agency social media graphic, blue white modern design")
 
     return {

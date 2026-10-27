@@ -65,7 +65,8 @@ def _load_photo(photo_bytes):
         w, h = img.size
         s = min(w, h)
         left = (w - s) // 2
-        top = (h - s) // 2
+        # Top-biased: face/subject usually in upper portion of photo
+        top = max(0, (h - s) // 4)
         return img.crop((left, top, left + s, top + s))
     except Exception:
         return None
@@ -384,8 +385,8 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
     y += 20
 
     # Headline — first half dark, second half color
-    fh1 = _font(74)
-    fh2 = _font(92)
+    fh1 = _font(52)
+    fh2 = _font(64)
     words = hl.split()
     mid = max(1, len(words) // 2)
     for part, fnt, col in [(" ".join(words[:mid]), fh1, DARK),
@@ -546,8 +547,8 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
     y += 62
 
     # Big headline — first half big white, second half medium color
-    fh_big = _font(96)
-    fh_med = _font(70)
+    fh_big = _font(68)
+    fh_med = _font(52)
     words = hl.split()
     mid = max(1, len(words) // 2)
     for part, fnt, col in [(" ".join(words[:mid]), fh_big, WHITE),
