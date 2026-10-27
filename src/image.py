@@ -1,7 +1,7 @@
 """
 Image provider for David Web Solution posts.
 Primary: Pillow-based designed graphic (always works).
-Fallback: Pexels -> Unsplash -> Picsum (photo variety).
+Photo sources: Pexels -> Unsplash API -> Unsplash Source (free, no key)
 """
 import os
 import random
@@ -12,14 +12,26 @@ PEXELS_KEY   = os.environ.get("PEXELS_API_KEY", "")
 UNSPLASH_KEY = os.environ.get("UNSPLASH_ACCESS_KEY", "")
 IMGBB_KEY    = os.environ.get("IMGBB_API_KEY", "")
 
+# Queries tuned to return professional, people-inclusive photos
 PILLAR_QUERIES = {
-    "wordpress_tip":    ["wordpress website design", "web development laptop"],
-    "seo_tip":          ["google search seo", "digital marketing analytics"],
-    "ai_video_ugc":     ["ai technology futuristic", "video content creation"],
-    "web_mistake":      ["website error broken", "computer screen problem"],
-    "client_result":    ["business growth success", "website analytics dashboard"],
-    "tool_spotlight":   ["web development tools", "coding software"],
-    "industry_insight": ["digital marketing trends", "technology business"],
+    "wordpress_tip":    ["wordpress developer woman laptop", "web designer working"],
+    "seo_tip":          ["digital marketing woman analytics", "seo strategy business"],
+    "ai_video_ugc":     ["content creator woman studio", "video marketing professional"],
+    "web_mistake":      ["web developer woman coding", "designer laptop computer"],
+    "client_result":    ["business woman success meeting", "team celebration growth"],
+    "tool_spotlight":   ["developer woman tools laptop", "coding professional woman"],
+    "industry_insight": ["digital marketing professional woman", "tech business team"],
+}
+
+# Unsplash Source keywords (free CDN, no API key needed)
+UNSPLASH_SOURCE_QUERIES = {
+    "wordpress_tip":    "developer,woman,laptop,web",
+    "seo_tip":          "marketing,woman,analytics,digital",
+    "ai_video_ugc":     "content,creator,woman,video",
+    "web_mistake":      "designer,woman,computer,coding",
+    "client_result":    "business,woman,success,team",
+    "tool_spotlight":   "developer,woman,technology,laptop",
+    "industry_insight": "professional,woman,digital,technology",
 }
 
 
@@ -71,21 +83,28 @@ def _fetch_unsplash(query: str) -> bytes | None:
     return None
 
 
-def _fetch_picsum() -> bytes | None:
+def _fetch_unsplash_source(pillar: str) -> bytes | None:
+    """Fetch from Unsplash CDN — free, no API key, returns relevant professional photo."""
     try:
-        seed = random.randint(1, 1000)
-        r = requests.get(f"https://picsum.photos/seed/{seed}/1080/1080", timeout=20)
-        if r.status_code == 200:
+        kw = UNSPLASH_SOURCE_QUERIES.get(pillar, "professional,woman,business,technology")
+        seed = random.randint(1, 500)
+        # Unsplash source with seed for variety
+        r = requests.get(
+            f"https://source.unsplash.com/1080x1080/?{kw}&sig={seed}",
+            timeout=25,
+            allow_redirects=True,
+        )
+        if r.status_code == 200 and len(r.content) > 10000:
             return r.content
     except Exception as e:
-        print(f"[IMAGE] Picsum error: {e}")
+        print(f"[IMAGE] Unsplash source error: {e}")
     return None
 
 
 def get_image(pillar: str, post_text: str) -> bytes | None:
     # 1. Fetch a real photo to composite into the design
     query = random.choice(PILLAR_QUERIES.get(pillar, ["web development agency"]))
-    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query)
+    photo_bytes = _fetch_pexels(query) or _fetch_unsplash(query) or _fetch_unsplash_source(pillar)
     if photo_bytes:
         print(f"[IMAGE] Photo fetched for: {query}")
     else:
@@ -101,8 +120,8 @@ def get_image(pillar: str, post_text: str) -> bytes | None:
     except Exception as e:
         print(f"[IMAGE] Designer error: {e}")
 
-    # 3. Last resort: raw photo or picsum
-    return photo_bytes or _fetch_picsum()
+    # 3. Last resort: return raw photo bytes if available
+    return photo_bytes
 
 
 def upload_to_imgbb(img_bytes: bytes, filename: str) -> str | None:

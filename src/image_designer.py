@@ -304,8 +304,8 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
         draw.ellipse([SIZE - rad, -rad // 2, SIZE + rad, rad + BAND_H // 2],
                      outline=col, width=2)
 
-    # Logo on band — white, vertically centered
-    logo_y = (BAND_H - 60) // 2
+    # Logo on band — white, moved slightly lower for breathing room
+    logo_y = BAND_H - 68
     img = _paste_logo(img, PAD, logo_y, white=True)
     draw = ImageDraw.Draw(img)
 
