@@ -110,7 +110,10 @@ def generate_post(pillar: str | None = None) -> dict:
         max_tokens=400,
     )
 
+    import re
     text = response.choices[0].message.content.strip()
+    # Strip markdown bold/italic markers that LLMs sometimes add
+    text = re.sub(r'\*{1,3}([^*]+)\*{1,3}', r'\1', text)
     image_prompt = IMAGE_PROMPTS.get(pillar, "Professional web agency social media graphic, blue white modern design")
 
     return {

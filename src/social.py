@@ -9,6 +9,9 @@ import requests
 
 FB_PAGE_ID    = os.environ["DWS_FB_PAGE_ID"]
 FB_PAGE_TOKEN = os.environ["DWS_FB_PAGE_TOKEN"]
+# Instagram requires a User Access Token (Page Tokens lack instagram_content_publish).
+# Falls back to FB_PAGE_TOKEN if not set (which will fail — set DWS_IG_USER_TOKEN).
+IG_USER_TOKEN = os.environ.get("DWS_IG_USER_TOKEN", FB_PAGE_TOKEN)
 
 BASE = "https://graph.facebook.com/v21.0"
 
@@ -33,7 +36,7 @@ def _get_ig_account_id() -> str | None:
             f"{BASE}/{FB_PAGE_ID}",
             params={
                 "fields": "instagram_business_account",
-                "access_token": FB_PAGE_TOKEN,
+                "access_token": IG_USER_TOKEN,
             },
             timeout=15,
         )
@@ -107,7 +110,7 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
             data={
                 "image_url": image_url,
                 "caption": text,
-                "access_token": FB_PAGE_TOKEN,
+                "access_token": IG_USER_TOKEN,
             },
             timeout=30,
         )
@@ -131,7 +134,7 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
                 f"{BASE}/{container_id}",
                 params={
                     "fields": "status_code",
-                    "access_token": FB_PAGE_TOKEN,
+                    "access_token": IG_USER_TOKEN,
                 },
                 timeout=15,
             )
@@ -148,7 +151,7 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
             f"{BASE}/{ig_id}/media_publish",
             data={
                 "creation_id": container_id,
-                "access_token": FB_PAGE_TOKEN,
+                "access_token": IG_USER_TOKEN,
             },
             timeout=30,
         )
