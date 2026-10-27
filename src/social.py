@@ -22,12 +22,6 @@ def _get_ig_account_id() -> str | None:
     """Auto-fetch Instagram Business Account ID linked to the FB Page."""
     global _ig_account_id_cache
 
-    # 1. Check env var first (optional override)
-    env_id = os.environ.get("DWS_IG_ACCOUNT_ID", "").strip()
-    if env_id:
-        _ig_account_id_cache = env_id
-        return env_id
-
     if _ig_account_id_cache:
         return _ig_account_id_cache
 
