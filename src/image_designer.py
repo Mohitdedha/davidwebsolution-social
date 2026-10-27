@@ -594,77 +594,80 @@ def _tpl_bold_reveal(hl, bullets, cta, color, photo=None, intro_label="WE OFFER"
     draw.text((W-PAD-tw, (HH-22)//2), BRAND_TAG, font=tf, fill=MUTED)
 
     # Hero strip: gradient bg
-    HERO_Y, HERO_H = HH, 360
+    HERO_Y, HERO_H = HH, 330
     for i in range(HERO_H):
         t = i/max(HERO_H-1,1)
         c = tuple(int((16,18,42)[j]+t*((8,12,38)[j]-(16,18,42)[j])) for j in range(3))
         draw.line([(0,HERO_Y+i),(W,HERO_Y+i)], fill=c)
-    # Diagonal accent stripes
+    # Diagonal accent stripes top-right
     for i in range(0,220,14):
         draw.line([(W-i,HERO_Y),(W,HERO_Y+i)], fill=(*color,50), width=2)
 
-    y = HERO_Y + 38
+    y = HERO_Y + 30
     # Service label pill
     pf   = _font(17)
     pt   = intro_label
     pw_  = draw.textbbox((0,0), pt, font=pf)[2] + 32
-    _rr(draw, [PAD, y, PAD+pw_, y+36], 18, color)
-    draw.text((PAD+16, y+8), pt, font=pf, fill=WHITE)
-    y += 64
+    _rr(draw, [PAD, y, PAD+pw_, y+34], 17, color)
+    draw.text((PAD+16, y+7), pt, font=pf, fill=WHITE)
+    y += 52
 
-    # 3-line headline
-    fh = _font(82)
+    # 3-line headline (font 74 — slightly smaller so it fits cleanly)
+    fh = _font(74)
     words = hl.split()
     lines_hl = [words[i:i+2] for i in range(0,min(6,len(words)),2)] or [[hl]]
     colors_hl = [WHITE, color, WHITE]
     for idx, wds in enumerate(lines_hl[:3]):
         txt = " ".join(wds)
         draw.text((PAD, y), txt, font=fh, fill=colors_hl[idx % 3])
-        y += draw.textbbox((0,0), txt, font=fh)[3] + 4
-    y += 16
+        y += draw.textbbox((0,0), txt, font=fh)[3] + 3
+    y += 10
 
     # Subtext
-    fs = _font(24, False)
+    fs = _font(22, False)
     sub = "We Help To Grow Your Business"
     for sl in _wrap(sub, fs, W-PAD*2, draw, 2):
         draw.text((PAD, y), sl, font=fs, fill=MUTED)
-        y += 33
+        y += 30
 
     # Divider
     DIV_Y = HERO_Y + HERO_H
     draw.rectangle([0, DIV_Y, W, DIV_Y+6], fill=color)
     draw.rectangle([0, DIV_Y+6, W, DIV_Y+8], fill=DARKER)
 
-    # Services grid 2x2
-    GRID_Y = DIV_Y + 8
-    draw.rectangle([0, GRID_Y, W, GRID_Y+510], fill=DARK)
-    gy = GRID_Y + 38
-    fsh = _font(28)
+    # Services grid 2x2 — height exactly fits 2 rows + header
+    CARD_W = (W-PAD*2-20)//2
+    CARD_H = 168
+    CARD_GAP = 18
+    GRID_HDR = 58   # "Our Services" header
+    GRID_H   = GRID_HDR + 2*(CARD_H+CARD_GAP) + 10
+    GRID_Y   = DIV_Y + 8
+    draw.rectangle([0, GRID_Y, W, GRID_Y+GRID_H], fill=DARK)
+    gy = GRID_Y + 22
+    fsh = _font(27)
     draw.text((PAD, gy), "Our Services", font=fsh, fill=WHITE)
     uw_ = draw.textbbox((0,0),"Our Services",font=fsh)[2]
-    draw.rectangle([PAD, gy+36, PAD+uw_, gy+40], fill=color)
-    gy += 62
+    draw.rectangle([PAD, gy+33, PAD+uw_, gy+37], fill=color)
+    gy += GRID_HDR
 
-    CARD_W = (W-PAD*2-24)//2
-    CARD_H = 176
     for idx, bul in enumerate(bullets[:4]):
         col_i = idx%2; row_i = idx//2
-        cx = PAD + col_i*(CARD_W+24)
-        cy = gy + row_i*(CARD_H+22)
-        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 18, (18,20,46))
-        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 18, None, color, 2)
-        fn  = _font(42)
+        cx = PAD + col_i*(CARD_W+20)
+        cy = gy + row_i*(CARD_H+CARD_GAP)
+        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 16, (18,20,46))
+        _rr(draw, [cx, cy, cx+CARD_W, cy+CARD_H], 16, None, color, 2)
+        fn  = _font(38)
         num = f"0{idx+1}"
-        draw.text((cx+20, cy+16), num, font=fn, fill=color)
-        fn2 = _font(22, False)
-        nlines = _wrap(bul, fn2, CARD_W-40, draw, 2)
-        ny = cy+72
+        draw.text((cx+18, cy+14), num, font=fn, fill=color)
+        fn2 = _font(20, False)
+        nlines = _wrap(bul, fn2, CARD_W-38, draw, 2)
+        ny = cy+62
         for nl in nlines:
-            draw.text((cx+20, ny), nl, font=fn2, fill=WHITE); ny+=30
-        draw.rectangle([cx+20, cy+CARD_H-14, cx+60, cy+CARD_H-10], fill=color)
+            draw.text((cx+18, ny), nl, font=fn2, fill=WHITE); ny+=27
+        draw.rectangle([cx+18, cy+CARD_H-12, cx+52, cy+CARD_H-8], fill=color)
 
-    # CTA band
-    CTA_Y = GRID_Y + 510 + 8
+    # CTA band — fills remaining space
+    CTA_Y = GRID_Y + GRID_H + 6
     CTA_H = H - CTA_Y
     draw.rectangle([0, CTA_Y, W, H], fill=color)
     bf   = _font(26)
@@ -933,27 +936,16 @@ def design_post(pillar: str, post_text: str, photo_bytes: bytes = None) -> bytes
 
     photo = _load_photo(photo_bytes) if photo_bytes else None
 
-    # 5 templates in rotation — pick based on pillar weight
-    all_tpls = ["bold_reveal", "grow_with_us", "what_we_build", "agency_split", "dark_pro"]
+    # 3 native 1080x1350 portrait templates in rotation
+    all_tpls = ["bold_reveal", "grow_with_us", "what_we_build"]
     tpl = random.choice(all_tpls)
 
     if tpl == "bold_reveal":
         img = _tpl_bold_reveal(hl, blts, cta, color, photo, intro_label=intro)
     elif tpl == "grow_with_us":
         img = _tpl_grow_with_us(hl, blts, cta, color, photo, intro_label=intro)
-    elif tpl == "what_we_build":
-        img = _tpl_what_we_build(hl, blts, cta, color, photo, intro_label=intro)
-    elif tpl == "agency_split":
-        # Resize legacy 1080x1080 to 1080x1350 with padding
-        img_sq = _tpl_agency_split(hl, blts, cta, color, photo, intro_label=intro)
-        canvas = Image.new("RGB", (SIZE, HEIGHT), (12,14,30))
-        canvas.paste(img_sq, (0, (HEIGHT-SIZE)//2))
-        img = canvas
     else:
-        img_sq = _tpl_dark_pro(hl, blts, cta, color, photo, intro_label=intro)
-        canvas = Image.new("RGB", (SIZE, HEIGHT), (10,12,28))
-        canvas.paste(img_sq, (0, (HEIGHT-SIZE)//2))
-        img = canvas
+        img = _tpl_what_we_build(hl, blts, cta, color, photo, intro_label=intro)
 
     buf = io.BytesIO()
     img.save(buf, format="PNG", optimize=True)

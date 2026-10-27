@@ -101,6 +101,16 @@ Rules:
 - NO hashtags. NO emojis. Plain text only.""",
 }
 
+PILLAR_HASHTAGS = {
+    "wordpress_tip":    "#WordPressTips #WebDesign #DigitalMarketing #WordPressDev #WebDevelopment",
+    "seo_tip":          "#SEOTips #GoogleRanking #DigitalMarketing #SEOStrategy #SearchEngineOptimization",
+    "ai_video_ugc":     "#AIMarketing #UGCAds #VideoMarketing #DigitalAds #ContentMarketing",
+    "web_mistake":      "#WebDesign #BusinessGrowth #DigitalMarketing #WebDevelopment #SmallBusiness",
+    "client_result":    "#ClientResults #DigitalMarketing #BusinessGrowth #WebDesign #SuccessStory",
+    "tool_spotlight":   "#DigitalMarketing #MarketingTools #WebDesign #AgencyLife #GrowthHacking",
+    "industry_insight": "#DigitalMarketing #MarketingTrends #BusinessGrowth #SEO #OnlineMarketing",
+}
+
 IMAGE_PROMPTS = {
     "wordpress_tip":    "Clean minimal flat design, WordPress logo, blue and white, professional agency style",
     "seo_tip":          "Google search bar rising arrow graph, green and white, clean modern design",
@@ -144,17 +154,22 @@ def generate_post(pillar: str | None = None) -> dict:
     text = response.choices[0].message.content.strip()
     # Strip markdown bold/italic markers
     text = re.sub(r'\*{1,3}([^*]+)\*{1,3}', r'\1', text)
-    # Remove all hashtag lines and inline hashtags
+    # Remove any AI-generated hashtags (we add our own curated ones)
     text = re.sub(r'#\w+', '', text)
     # Remove lines that are now empty or just whitespace/punctuation
     lines = [l.rstrip() for l in text.splitlines()]
     lines = [l for l in lines if l.strip() and not all(c in ' |,-.' for c in l.strip())]
     text = '\n'.join(lines).strip()
+
+    # Append 5 curated trending hashtags + brand tag
+    hashtags = PILLAR_HASHTAGS.get(pillar, "#DigitalMarketing #WebDesign #BusinessGrowth #SEO #OnlineMarketing")
+    caption  = f"{text}\n\n{hashtags} #DavidWebSolution"
+
     image_prompt = IMAGE_PROMPTS.get(pillar, "Professional web agency social media graphic, blue white modern design")
 
     return {
         "pillar": pillar,
-        "text": text,
+        "text":   caption,
         "image_prompt": image_prompt,
     }
 

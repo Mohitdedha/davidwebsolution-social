@@ -15,13 +15,13 @@ IMGBB_KEY    = os.environ.get("IMGBB_API_KEY", "")
 
 # Queries tuned to return professional, people-inclusive photos
 PILLAR_QUERIES = {
-    "wordpress_tip":    ["wordpress developer woman laptop", "web designer working"],
-    "seo_tip":          ["digital marketing woman analytics", "seo strategy business"],
-    "ai_video_ugc":     ["content creator woman studio", "video marketing professional"],
-    "web_mistake":      ["web developer woman coding", "designer laptop computer"],
-    "client_result":    ["business woman success meeting", "team celebration growth"],
-    "tool_spotlight":   ["developer woman tools laptop", "coding professional woman"],
-    "industry_insight": ["digital marketing professional woman", "tech business team"],
+    "wordpress_tip":    ["wordpress website laptop desk", "web design workspace minimal"],
+    "seo_tip":          ["digital marketing analytics dashboard", "seo graph growth chart"],
+    "ai_video_ugc":     ["ai technology futuristic digital", "video production studio lights"],
+    "web_mistake":      ["laptop code screen dark", "web development workspace monitor"],
+    "client_result":    ["business growth chart success", "office modern workspace desk"],
+    "tool_spotlight":   ["technology tools software laptop", "coding dark screen minimal"],
+    "industry_insight": ["digital technology abstract network", "business strategy modern office"],
 }
 
 # Unsplash Source keywords (free CDN, no API key needed)
