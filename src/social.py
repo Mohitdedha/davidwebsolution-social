@@ -26,11 +26,12 @@ def _get_ig_account_id() -> str | None:
         return _ig_account_id_cache
 
     try:
+        # Use Page Token (not User Token) to read page fields — it has page access
         r = requests.get(
             f"{BASE}/{FB_PAGE_ID}",
             params={
                 "fields": "instagram_business_account",
-                "access_token": IG_USER_TOKEN,
+                "access_token": FB_PAGE_TOKEN,
             },
             timeout=15,
         )
