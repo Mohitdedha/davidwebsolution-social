@@ -19,6 +19,7 @@ jobs:
           FB_APP_SECRET: ${{ secrets.FB_APP_SECRET }}
           FB_USER_TOKEN: ${{ secrets.FB_LONG_LIVED_USER_TOKEN }}
           DWS_FB_PAGE_ID: ${{ secrets.DWS_FB_PAGE_ID }}
+          DWS_IG_USER_TOKEN: ${{ secrets.DWS_IG_USER_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
           GH_REPO: ${{ github.repository }}
         run: |
@@ -91,6 +92,29 @@ jobs:
 
           update_secret("DWS_FB_PAGE_TOKEN", page_token)
           update_secret("FB_LONG_LIVED_USER_TOKEN", new_user_token)
+
+          # ── Step 4b: Refresh IG User Token (same long-lived user token works) ──
+          # Exchange the current DWS_IG_USER_TOKEN to keep it fresh (60 days)
+          ig_token = os.environ.get("DWS_IG_USER_TOKEN", "")
+          if ig_token:
+              print("[INFO] Refreshing IG User Token...")
+              r_ig = requests.get("https://graph.facebook.com/oauth/access_token", params={
+                  "grant_type": "fb_exchange_token",
+                  "client_id": app_id,
+                  "client_secret": app_secret,
+                  "fb_exchange_token": ig_token,
+              })
+              if r_ig.status_code == 200:
+                  new_ig_token = r_ig.json().get("access_token", "")
+                  if new_ig_token:
+                      update_secret("DWS_IG_USER_TOKEN", new_ig_token)
+                      print("[OK] DWS_IG_USER_TOKEN refreshed (60 days)")
+                  else:
+                      print(f"[WARN] IG token refresh returned no token: {r_ig.json()}")
+              else:
+                  print(f"[WARN] IG token refresh failed: {r_ig.status_code} {r_ig.text[:200]}")
+          else:
+              print("[WARN] DWS_IG_USER_TOKEN not set, skipping IG refresh")
 
           print("[SUCCESS] All tokens refreshed automatically!")
           EOF

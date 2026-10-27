@@ -92,7 +92,7 @@ def _enhance_photo(photo, contrast=1.1, color=1.05, brightness=0.95):
 
 BRAND_WEB = "davidwebsolution.com"
 BRAND_TAG = "@davidwebsolution"
-BRAND_PHONE = "+91 98765 43210"
+BRAND_PHONE = "+91 82854 23939"
 
 CTA_OPTIONS = [
     "DM us to get started",
