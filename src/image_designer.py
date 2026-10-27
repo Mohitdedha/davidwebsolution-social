@@ -382,10 +382,9 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
     _btn(draw, PAD, BTN_Y, 286, 52, color, cta, _font(22), WHITE)
 
     INFO_X = PAD + 306
-    draw.text((INFO_X, BAR_Y + 18), BRAND_PHONE,
-              font=_font(18, False), fill=(165, 178, 215))
-    draw.text((INFO_X, BAR_Y + 44), BRAND_WEB,
-              font=_font(18, False), fill=(115, 130, 175))
+    footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
+    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
+              footer_text, font=_font(22, False), fill=(190, 200, 230))
 
     return img
 
@@ -516,10 +515,9 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
     _btn(draw, PAD, BTN_Y, 272, 52, color, cta, _font(22), WHITE)
 
     INFO_X = PAD + 292
-    draw.text((INFO_X, BAR_Y + 16), BRAND_PHONE,
-              font=_font(18, False), fill=(148, 164, 208))
-    draw.text((INFO_X, BAR_Y + 44), BRAND_WEB,
-              font=_font(18, False), fill=(100, 118, 170))
+    footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
+    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
+              footer_text, font=_font(22, False), fill=(190, 200, 240))
 
     return img
 
