@@ -304,12 +304,12 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
         draw.ellipse([SIZE - rad, -rad // 2, SIZE + rad, rad + BAND_H // 2],
                      outline=col, width=2)
 
-    # Logo on band — white, moved slightly lower for breathing room
-    logo_y = BAND_H - 68
+    # Logo on band — white, vertically centered with clear margin
+    logo_y = (BAND_H - 52) // 2   # centers a ~52px-tall logo; never clips top or bottom
     img = _paste_logo(img, PAD, logo_y, white=True)
     draw = ImageDraw.Draw(img)
 
-    # Social icons — top right on band, vertically centered
+    # Social icons — top right on band, same vertical center as logo
     for i, ic in enumerate(["f", "ig", "in"]):
         ix = SIZE - PAD - 36 - i * 52
         iy = (BAND_H - 36) // 2
@@ -426,16 +426,16 @@ def _tpl_agency_split(hl, bullets, cta, color, photo=None, intro_label="WE PROVI
     draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=DARK)
     draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
-    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
-    btn_font = _font(20)
-    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 56
-    btn_w = max(220, min(btn_w, 340))
-    _btn(draw, PAD, BTN_Y, btn_w, 52, color, cta, btn_font, WHITE)
+    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 48) // 2
+    btn_font = _font(19)
+    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 64
+    btn_w = max(220, min(btn_w, 320))
+    _btn(draw, PAD, BTN_Y, btn_w, 48, color, cta, btn_font, WHITE)
 
-    INFO_X = PAD + btn_w + 24
+    INFO_X = PAD + btn_w + 36   # wider gap between button and phone text
     footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
-    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
-              footer_text, font=_font(20, False), fill=(190, 200, 230))
+    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 26) // 2),
+              footer_text, font=_font(19, False), fill=(190, 200, 230))
 
     return img
 
@@ -583,16 +583,16 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="WE ARE"):
     draw.rectangle([0, BAR_Y, SIZE, SIZE], fill=(14, 16, 34))
     draw.rectangle([0, BAR_Y, SIZE, BAR_Y + 4], fill=color)
 
-    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 52) // 2
-    btn_font = _font(20)
-    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 56
-    btn_w = max(220, min(btn_w, 340))
-    _btn(draw, PAD, BTN_Y, btn_w, 52, color, cta, btn_font, WHITE)
+    BTN_Y = BAR_Y + (BOTTOM_BAR_H - 48) // 2
+    btn_font = _font(19)
+    btn_w = draw.textbbox((0, 0), cta, font=btn_font)[2] + 64
+    btn_w = max(220, min(btn_w, 320))
+    _btn(draw, PAD, BTN_Y, btn_w, 48, color, cta, btn_font, WHITE)
 
-    INFO_X = PAD + btn_w + 24
+    INFO_X = PAD + btn_w + 36   # wider gap between button and phone text
     footer_text = f"{BRAND_PHONE}  |  {BRAND_WEB}"
-    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 28) // 2),
-              footer_text, font=_font(20, False), fill=(190, 200, 240))
+    draw.text((INFO_X, BAR_Y + (BOTTOM_BAR_H - 26) // 2),
+              footer_text, font=_font(19, False), fill=(190, 200, 240))
 
     return img
 
