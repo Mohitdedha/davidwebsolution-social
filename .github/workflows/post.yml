@@ -2,16 +2,9 @@ name: David Web Solution — Social Auto-Poster
 
 on:
   schedule:
-    - cron: "0 6 * * *"   # UK 6am / IST 11:30am  — UK morning wake-up
-    - cron: "0 8 * * *"   # UK 8am / IST 1:30pm   — UK commute peak
-    - cron: "0 10 * * *"  # UK 10am / IST 3:30pm  — UK mid-morning
-    - cron: "0 12 * * *"  # UK 12pm / US-EST 7am  — UK lunch + US wakes up
-    - cron: "0 14 * * *"  # UK 2pm  / US-EST 9am  — PEAK both audiences
-    - cron: "0 17 * * *"  # UK 5pm  / US-EST 12pm — PEAK both audiences
-    - cron: "0 19 * * *"  # UK 7pm  / US-EST 2pm  — US afternoon peak
-    - cron: "0 21 * * *"  # UK 9pm  / US-EST 4pm  — US end-of-day peak
-    - cron: "0 23 * * *"  # UK 11pm / US-EST 6pm  — US prime time
-    - cron: "0 1 * * *"   # UK 1am  / US-EST 8pm  — US evening scrolling
+    # TODAY ONLY (Oct 28): every hour, 2 posts per run
+    # Revert to regular schedule tomorrow
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       pillar:
@@ -48,5 +41,5 @@ jobs:
           IMGBB_API_KEY:            ${{ secrets.IMGBB_API_KEY }}
           DWS_LI_ACCESS_TOKEN:      ${{ secrets.DWS_LI_ACCESS_TOKEN }}
           DWS_LI_ORGANIZATION_ID:   ${{ secrets.DWS_LI_ORGANIZATION_ID }}
-          POSTS_PER_RUN:            "1"
+          POSTS_PER_RUN:            "2"
         run: python src/main.py
