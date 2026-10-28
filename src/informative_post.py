@@ -108,17 +108,25 @@ def generate_informative_image(topic: dict) -> bytes:
     img = Image.new("RGB", (SIZE, SIZE), NAVY)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # Background grid
+    # Background grid — more visible
     for i in range(0, SIZE, 36):
-        draw.line([(i, 0), (i, SIZE)], fill=(26, 86, 219, 10), width=1)
-        draw.line([(0, i), (SIZE, i)], fill=(26, 86, 219, 8), width=1)
+        draw.line([(i, 0), (i, SIZE)], fill=(26, 86, 219, 30), width=1)
+        draw.line([(0, i), (SIZE, i)], fill=(26, 86, 219, 25), width=1)
 
-    # Subtle glow
+    # Diagonal accent lines for depth
+    for i in range(-SIZE, SIZE * 2, 120):
+        draw.line([(i, 0), (i + SIZE // 2, SIZE)], fill=(40, 100, 255, 12), width=1)
+
+    # Strong top-right glow
     glow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
-    for r in range(260, 0, -20):
-        alpha = int(18 * (1 - r / 260))
-        gd.ellipse([SIZE - 340 - r, -r, SIZE - 340 + r, r], fill=(26, 86, 219, alpha))
+    for r in range(400, 0, -20):
+        alpha = int(35 * (1 - r / 400))
+        gd.ellipse([SIZE - 420 - r, -r, SIZE - 420 + r, r], fill=(26, 86, 219, alpha))
+    # Bottom-left accent glow
+    for r in range(300, 0, -20):
+        alpha = int(20 * (1 - r / 300))
+        gd.ellipse([-r, SIZE - r, r, SIZE + r], fill=(245, 184, 0, alpha))
     img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
     draw = ImageDraw.Draw(img, "RGBA")
 
