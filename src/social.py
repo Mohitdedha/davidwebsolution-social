@@ -171,10 +171,31 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
         return None
 
 
+def _get_li_author() -> str | None:
+    """Get LinkedIn author URN — company page if set, else personal profile."""
+    headers = {"Authorization": f"Bearer {LI_TOKEN}"}
+    # Company page takes priority
+    if LI_ORG_ID:
+        return f"urn:li:organization:{LI_ORG_ID}"
+    # Personal profile — fetch numeric ID from token
+    try:
+        r = requests.get(f"{LI_BASE}/me", headers=headers, timeout=15)
+        if r.status_code == 200:
+            person_id = r.json().get("id")
+            print(f"[LI] Personal profile ID: {person_id}")
+            return f"urn:li:person:{person_id}"
+        else:
+            print(f"[LI] Could not fetch profile ID: {r.status_code} {r.text[:200]}")
+            return None
+    except Exception as e:
+        print(f"[LI] Profile fetch error: {e}")
+        return None
+
+
 def _post_linkedin(text: str, image_url: str | None = None) -> str | None:
-    """Post to LinkedIn Company Page. Returns post URN or None."""
-    if not LI_TOKEN or not LI_ORG_ID:
-        print("[LI] Skipping — DWS_LI_ACCESS_TOKEN or DWS_LI_ORGANIZATION_ID not set.")
+    """Post to LinkedIn (personal profile or company page). Returns post URN or None."""
+    if not LI_TOKEN:
+        print("[LI] Skipping — DWS_LI_ACCESS_TOKEN not set.")
         return None
 
     headers = {
@@ -183,13 +204,16 @@ def _post_linkedin(text: str, image_url: str | None = None) -> str | None:
         "X-Restli-Protocol-Version": "2.0.0",
         "LinkedIn-Version": "202401",
     }
-    author = f"urn:li:organization:{LI_ORG_ID}"
+
+    author = _get_li_author()
+    if not author:
+        print("[LI] Skipping — could not determine LinkedIn author URN.")
+        return None
 
     try:
         # Step 1: Upload image if provided
         media_asset = None
         if image_url:
-            # Register upload
             reg = requests.post(
                 f"{LI_BASE}/assets?action=registerUpload",
                 headers=headers,
@@ -206,7 +230,6 @@ def _post_linkedin(text: str, image_url: str | None = None) -> str | None:
                 reg_data = reg.json()["value"]
                 upload_url = reg_data["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
                 media_asset = reg_data["asset"]
-                # Download image bytes and upload to LinkedIn
                 img_bytes = requests.get(image_url, timeout=30).content
                 requests.put(upload_url, data=img_bytes,
                              headers={"Authorization": f"Bearer {LI_TOKEN}"}, timeout=60)
