@@ -38,9 +38,9 @@ jobs:
             echo "SHOULD_RUN=true" >> $GITHUB_ENV
             echo "[MODE] Boost days — 2 posts/hr"
 
-          # Oct 30+: only at US/UK peak hours, 1 post per run
+          # Oct 30+: only at US/UK peak hours, 3 posts per run (10x3=30/day)
           else
-            echo "POSTS_PER_RUN=1" >> $GITHUB_ENV
+            echo "POSTS_PER_RUN=3" >> $GITHUB_ENV
             # Peak hours UTC: 6,8,10,12,14,17,19,21,23,1
             if [[ "$HOUR" =~ ^(6|8|10|12|14|17|19|21|23|1)$ ]]; then
               echo "SHOULD_RUN=true" >> $GITHUB_ENV
