@@ -108,25 +108,29 @@ def generate_informative_image(topic: dict) -> bytes:
     img = Image.new("RGB", (SIZE, SIZE), NAVY)
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # Background grid — more visible
-    for i in range(0, SIZE, 36):
-        draw.line([(i, 0), (i, SIZE)], fill=(26, 86, 219, 30), width=1)
-        draw.line([(0, i), (SIZE, i)], fill=(26, 86, 219, 25), width=1)
+    # Background grid — visible
+    for i in range(0, SIZE, 40):
+        draw.line([(i, 0), (i, SIZE)], fill=(50, 110, 255, 55), width=1)
+        draw.line([(0, i), (SIZE, i)], fill=(50, 110, 255, 45), width=1)
 
-    # Diagonal accent lines for depth
-    for i in range(-SIZE, SIZE * 2, 120):
-        draw.line([(i, 0), (i + SIZE // 2, SIZE)], fill=(40, 100, 255, 12), width=1)
+    # Diagonal accent lines
+    for i in range(-SIZE, SIZE * 2, 100):
+        draw.line([(i, 0), (i + SIZE // 2, SIZE)], fill=(80, 140, 255, 22), width=1)
 
-    # Strong top-right glow
+    # Strong top-right blue glow
     glow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
+    for r in range(500, 0, -20):
+        alpha = int(55 * (1 - r / 500))
+        gd.ellipse([SIZE - 350 - r, -r, SIZE - 350 + r, r], fill=(40, 100, 255, alpha))
+    # Bottom-left yellow accent glow
     for r in range(400, 0, -20):
-        alpha = int(35 * (1 - r / 400))
-        gd.ellipse([SIZE - 420 - r, -r, SIZE - 420 + r, r], fill=(26, 86, 219, alpha))
-    # Bottom-left accent glow
-    for r in range(300, 0, -20):
-        alpha = int(20 * (1 - r / 300))
+        alpha = int(40 * (1 - r / 400))
         gd.ellipse([-r, SIZE - r, r, SIZE + r], fill=(245, 184, 0, alpha))
+    # Center subtle glow
+    for r in range(300, 0, -20):
+        alpha = int(15 * (1 - r / 300))
+        gd.ellipse([SIZE//2 - r, SIZE//2 - r, SIZE//2 + r, SIZE//2 + r], fill=(26, 86, 219, alpha))
     img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
     draw = ImageDraw.Draw(img, "RGBA")
 
@@ -184,7 +188,7 @@ def generate_informative_image(topic: dict) -> bytes:
         px1, py1 = SIZE - P, y + pill_h
         # Pill background
         _rounded_rect(draw, (px0, py0, px1, py1), radius=14,
-                      fill=(26, 86, 219, 48), outline=(99, 152, 255, 60), width=1)
+                      fill=(26, 86, 219, 22), outline=(99, 152, 255, 90), width=1)
         # Number circle
         cx, cy = px0 + 22 + 20, py0 + pill_h // 2
         draw.ellipse([cx - 20, cy - 20, cx + 20, cy + 20], fill=BLUE)
