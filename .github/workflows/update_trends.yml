@@ -1,0 +1,38 @@
+name: David Web Solution — Weekly Trend Updater
+
+on:
+  schedule:
+    - cron: "0 0 * * *"   # Every day 5:30 AM IST
+  workflow_dispatch:        # Manual trigger anytime
+
+jobs:
+  update-trends:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write       # Needed to commit back to repo
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install groq -q
+
+      - name: Fetch trending hashtags and patch
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: python src/update_trends.py
+
+      - name: Commit updated hashtags
+        run: |
+          git config user.name  "DWS Trend Bot"
+          git config user.email "bot@davidwebsolution.com"
+          git add src/informative_post.py
+          git diff --cached --quiet || git commit -m "chore: refresh trending hashtags [$(date '+%Y-%m-%d')]"
+          git push
