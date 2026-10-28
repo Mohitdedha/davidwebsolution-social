@@ -18,11 +18,17 @@ PILL_BORDER = (99, 152, 255, 70)
 
 # Hashtag pool — 5 trending per post
 _HASHTAG_POOL = [
-    "#DigitalMarketing", "#WebDesign", "#SEO", "#SmallBusiness", "#MarketingTips",
-    "#OnlineMarketing", "#BusinessGrowth", "#SocialMediaMarketing", "#ContentMarketing",
-    "#Entrepreneur", "#WebDevelopment", "#GoogleAds", "#InstagramMarketing", "#Branding",
-    "#MarketingStrategy", "#LeadGeneration", "#StartupLife", "#BusinessOwner",
-    "#DigitalAgency", "#AIMarketing",
+    # Global / evergreen
+    "#DigitalMarketing", "#WebDesign", "#SEO", "#MarketingTips", "#OnlineMarketing",
+    "#BusinessGrowth", "#SocialMediaMarketing", "#ContentMarketing", "#Entrepreneur",
+    "#WebDevelopment", "#GoogleAds", "#InstagramMarketing", "#Branding", "#LeadGeneration",
+    "#MarketingStrategy", "#StartupLife", "#DigitalAgency", "#AIMarketing",
+    # US focused
+    "#USBusiness", "#AmericanBusiness", "#SmallBusinessUSA", "#USMarketing", "#USEntrepreneur",
+    # UK focused
+    "#UKBusiness", "#UKMarketing", "#UKEntrepreneur", "#SmallBusinessUK", "#LondonBusiness",
+    # Global ecom / agency
+    "#EcommerceMarketing", "#GlobalBusiness", "#AgencyLife", "#GrowthHacking", "#ScaleUp",
 ]
 
 def _hashtags():
