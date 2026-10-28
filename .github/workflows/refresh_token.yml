@@ -1,4 +1,4 @@
-name: Refresh Facebook Token
+name: Refresh Facebook + LinkedIn Tokens
 
 on:
   schedule:
@@ -20,6 +20,7 @@ jobs:
           FB_USER_TOKEN: ${{ secrets.FB_LONG_LIVED_USER_TOKEN }}
           DWS_FB_PAGE_ID: ${{ secrets.DWS_FB_PAGE_ID }}
           DWS_IG_USER_TOKEN: ${{ secrets.DWS_IG_USER_TOKEN }}
+          DWS_LI_ACCESS_TOKEN: ${{ secrets.DWS_LI_ACCESS_TOKEN }}
           GH_TOKEN: ${{ secrets.GH_PAT }}
           GH_REPO: ${{ github.repository }}
         run: |
@@ -123,6 +124,32 @@ jobs:
               print("[INFO] DWS_IG_USER_TOKEN not set, using refreshed FB user token")
               update_secret("DWS_IG_USER_TOKEN", new_user_token)
               print("[OK] DWS_IG_USER_TOKEN set to refreshed FB user token (60 days)")
+
+          # ── Step 5: Refresh LinkedIn Token ──
+          li_token = os.environ.get("DWS_LI_ACCESS_TOKEN", "")
+          if li_token:
+              print("[INFO] Refreshing LinkedIn Access Token...")
+              r_li = requests.post(
+                  "https://www.linkedin.com/oauth/v2/accessToken",
+                  data={
+                      "grant_type": "refresh_token",
+                      "refresh_token": li_token,
+                      "client_id": os.environ.get("LI_CLIENT_ID", ""),
+                      "client_secret": os.environ.get("LI_CLIENT_SECRET", ""),
+                  },
+                  timeout=30,
+              )
+              if r_li.status_code == 200:
+                  new_li_token = r_li.json().get("access_token", "")
+                  if new_li_token:
+                      update_secret("DWS_LI_ACCESS_TOKEN", new_li_token)
+                      print("[OK] DWS_LI_ACCESS_TOKEN refreshed")
+                  else:
+                      print("[WARN] LinkedIn refresh returned no token — manual re-auth needed every 60 days")
+              else:
+                  print(f"[WARN] LinkedIn refresh failed ({r_li.status_code}) — token may need manual re-auth")
+          else:
+              print("[INFO] DWS_LI_ACCESS_TOKEN not set — skipping LinkedIn refresh")
 
           print("[SUCCESS] All tokens refreshed automatically!")
           EOF

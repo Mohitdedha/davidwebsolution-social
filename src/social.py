@@ -1,7 +1,6 @@
 """
-Facebook Page + Instagram Business poster for David Web Solution.
-Uses Facebook Graph API v21.0.
-IG account ID is auto-discovered from the FB Page — no separate secret needed.
+Facebook Page + Instagram Business + LinkedIn Company poster for David Web Solution.
+Uses Facebook Graph API v21.0 and LinkedIn API v2.
 """
 import os
 import time
@@ -9,11 +8,14 @@ import requests
 
 FB_PAGE_ID    = os.environ["DWS_FB_PAGE_ID"]
 FB_PAGE_TOKEN = os.environ["DWS_FB_PAGE_TOKEN"]
-# Instagram requires a User Access Token (Page Tokens lack instagram_content_publish).
-# Falls back to FB_PAGE_TOKEN if not set (which will fail — set DWS_IG_USER_TOKEN).
 IG_USER_TOKEN = os.environ.get("DWS_IG_USER_TOKEN", FB_PAGE_TOKEN)
 
+# LinkedIn — optional, skipped if secrets not set
+LI_TOKEN   = os.environ.get("DWS_LI_ACCESS_TOKEN", "")
+LI_ORG_ID  = os.environ.get("DWS_LI_ORGANIZATION_ID", "")
+
 BASE = "https://graph.facebook.com/v21.0"
+LI_BASE = "https://api.linkedin.com/v2"
 
 _ig_account_id_cache = None
 
@@ -169,15 +171,89 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
         return None
 
 
+def _post_linkedin(text: str, image_url: str | None = None) -> str | None:
+    """Post to LinkedIn Company Page. Returns post URN or None."""
+    if not LI_TOKEN or not LI_ORG_ID:
+        print("[LI] Skipping — DWS_LI_ACCESS_TOKEN or DWS_LI_ORGANIZATION_ID not set.")
+        return None
+
+    headers = {
+        "Authorization": f"Bearer {LI_TOKEN}",
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0",
+        "LinkedIn-Version": "202401",
+    }
+    author = f"urn:li:organization:{LI_ORG_ID}"
+
+    try:
+        # Step 1: Upload image if provided
+        media_asset = None
+        if image_url:
+            # Register upload
+            reg = requests.post(
+                f"{LI_BASE}/assets?action=registerUpload",
+                headers=headers,
+                json={
+                    "registerUploadRequest": {
+                        "owner": author,
+                        "recipes": ["urn:li:digitalmediaRecipe:feedshare-image"],
+                        "serviceRelationships": [{"identifier": "urn:li:userGeneratedContent", "relationshipType": "OWNER"}],
+                    }
+                },
+                timeout=30,
+            )
+            if reg.status_code == 200:
+                reg_data = reg.json()["value"]
+                upload_url = reg_data["uploadMechanism"]["com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest"]["uploadUrl"]
+                media_asset = reg_data["asset"]
+                # Download image bytes and upload to LinkedIn
+                img_bytes = requests.get(image_url, timeout=30).content
+                requests.put(upload_url, data=img_bytes,
+                             headers={"Authorization": f"Bearer {LI_TOKEN}"}, timeout=60)
+                print(f"[LI] Image uploaded: {media_asset}")
+            else:
+                print(f"[LI] Image register failed {reg.status_code}: {reg.text[:200]}")
+
+        # Step 2: Create post
+        post_body = {
+            "author": author,
+            "lifecycleState": "PUBLISHED",
+            "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                    "shareCommentary": {"text": text},
+                    "shareMediaCategory": "IMAGE" if media_asset else "NONE",
+                    **({"media": [{"status": "READY", "media": media_asset}]} if media_asset else {}),
+                }
+            },
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"},
+        }
+
+        r = requests.post(f"{LI_BASE}/ugcPosts", headers=headers, json=post_body, timeout=30)
+        if r.status_code in (200, 201):
+            post_id = r.headers.get("x-restli-id") or r.json().get("id", "ok")
+            print(f"[LI] Posted: {post_id}")
+            return post_id
+        else:
+            print(f"[LI] Error {r.status_code}: {r.text[:300]}")
+            return None
+
+    except Exception as e:
+        print(f"[LI] Exception: {e}")
+        return None
+
+
 def post_to_all(text: str, image_url: str | None = None) -> dict:
-    """Post to Facebook + Instagram. Returns results dict."""
+    """Post to Facebook + Instagram + LinkedIn. Returns results dict."""
     results = {}
 
-    results["facebook"] = _post_fb(text, image_url)
+    results["facebook"]  = _post_fb(text, image_url)
     time.sleep(2)
     results["instagram"] = _post_ig(text, image_url)
+    time.sleep(2)
+    results["linkedin"]  = _post_linkedin(text, image_url)
 
     fb_ok = bool(results["facebook"])
     ig_ok = bool(results["instagram"])
-    print(f"[SOCIAL] FB={'OK' if fb_ok else 'FAIL'} | IG={'OK' if ig_ok else 'FAIL'}")
+    li_ok = bool(results["linkedin"])
+    print(f"[SOCIAL] FB={'OK' if fb_ok else 'FAIL'} | IG={'OK' if ig_ok else 'FAIL'} | LI={'OK' if li_ok else 'FAIL/SKIP'}")
     return results
