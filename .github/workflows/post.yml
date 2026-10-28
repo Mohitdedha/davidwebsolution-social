@@ -2,9 +2,7 @@ name: David Web Solution — Social Auto-Poster
 
 on:
   schedule:
-    # TODAY ONLY (Oct 28): every hour, 2 posts per run
-    # Revert to regular schedule tomorrow
-    - cron: "0 * * * *"
+    - cron: "0 * * * *"   # Runs every hour — smart date logic decides when to post
   workflow_dispatch:
     inputs:
       pillar:
@@ -28,18 +26,44 @@ jobs:
       - name: Install dependencies
         run: pip install groq requests Pillow -q
 
+      - name: Set schedule config
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          HOUR=$(date -u +%-H)
+          echo "Today UTC: $TODAY | Hour UTC: $HOUR"
+
+          # Oct 28-29: every hour, 2 posts per run
+          if [[ "$TODAY" == "2026-10-28" || "$TODAY" == "2026-10-29" ]]; then
+            echo "POSTS_PER_RUN=2" >> $GITHUB_ENV
+            echo "SHOULD_RUN=true" >> $GITHUB_ENV
+            echo "[MODE] Boost days — 2 posts/hr"
+
+          # Oct 30+: only at US/UK peak hours, 1 post per run
+          else
+            echo "POSTS_PER_RUN=1" >> $GITHUB_ENV
+            # Peak hours UTC: 6,8,10,12,14,17,19,21,23,1
+            if [[ "$HOUR" =~ ^(6|8|10|12|14|17|19|21|23|1)$ ]]; then
+              echo "SHOULD_RUN=true" >> $GITHUB_ENV
+              echo "[MODE] Regular — peak hour $HOUR UTC"
+            else
+              echo "SHOULD_RUN=false" >> $GITHUB_ENV
+              echo "[SKIP] Hour $HOUR UTC is not a peak hour — skipping"
+            fi
+          fi
+
       - name: Run poster
+        if: env.SHOULD_RUN == 'true'
         env:
-          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
-          DWS_FB_PAGE_ID:      ${{ secrets.DWS_FB_PAGE_ID }}
-          DWS_FB_PAGE_TOKEN:   ${{ secrets.DWS_FB_PAGE_TOKEN }}
-          DWS_IG_USER_TOKEN:   ${{ secrets.DWS_IG_USER_TOKEN }}
-          DWS_IG_ACCOUNT_ID:   ${{ secrets.DWS_IG_ACCOUNT_ID }}
+          GROQ_API_KEY:             ${{ secrets.GROQ_API_KEY }}
+          DWS_FB_PAGE_ID:           ${{ secrets.DWS_FB_PAGE_ID }}
+          DWS_FB_PAGE_TOKEN:        ${{ secrets.DWS_FB_PAGE_TOKEN }}
+          DWS_IG_USER_TOKEN:        ${{ secrets.DWS_IG_USER_TOKEN }}
+          DWS_IG_ACCOUNT_ID:        ${{ secrets.DWS_IG_ACCOUNT_ID }}
           PIXABAY_API_KEY:          ${{ secrets.PIXABAY_API_KEY }}
           PEXELS_API_KEY:           ${{ secrets.PEXELS_API_KEY }}
           UNSPLASH_ACCESS_KEY:      ${{ secrets.UNSPLASH_ACCESS_KEY }}
           IMGBB_API_KEY:            ${{ secrets.IMGBB_API_KEY }}
           DWS_LI_ACCESS_TOKEN:      ${{ secrets.DWS_LI_ACCESS_TOKEN }}
           DWS_LI_ORGANIZATION_ID:   ${{ secrets.DWS_LI_ORGANIZATION_ID }}
-          POSTS_PER_RUN:            "2"
+          POSTS_PER_RUN:            ${{ env.POSTS_PER_RUN }}
         run: python src/main.py
