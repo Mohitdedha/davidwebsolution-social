@@ -2,8 +2,8 @@
 Informative post generator for David Web Solution.
 Dark navy card, 3 frosted pills, yellow CTA — 1080x1080 square.
 """
-import io, os, random
-from PIL import Image, ImageDraw, ImageFont, ImageFilter
+import io, os, random, requests as _req
+from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 
 SIZE = 1080
 NAVY  = (5, 12, 31)
@@ -104,33 +104,98 @@ def _rounded_rect(draw, xy, radius, fill=None, outline=None, width=1):
     x0, y0, x1, y1 = xy
     draw.rounded_rectangle([x0, y0, x1, y1], radius=radius, fill=fill, outline=outline, width=width)
 
+
+def _fetch_bg_image(query: str) -> Image.Image | None:
+    """Fetch a background photo from Pixabay → Pexels → Unsplash API."""
+    px_key = os.environ.get("PIXABAY_API_KEY", "")
+    pe_key = os.environ.get("PEXELS_API_KEY", "")
+    un_key = os.environ.get("UNSPLASH_ACCESS_KEY", "")
+
+    url = None
+
+    # 1. Pixabay
+    if px_key:
+        try:
+            r = _req.get("https://pixabay.com/api/", params={
+                "key": px_key, "q": query, "image_type": "photo",
+                "orientation": "horizontal", "per_page": 10, "safesearch": "true",
+                "min_width": 800,
+            }, timeout=10)
+            hits = r.json().get("hits", [])
+            if hits:
+                url = random.choice(hits[:5]).get("webformatURL")
+        except Exception:
+            pass
+
+    # 2. Pexels
+    if not url and pe_key:
+        try:
+            r = _req.get("https://api.pexels.com/v1/search", params={
+                "query": query, "per_page": 10, "orientation": "square",
+            }, headers={"Authorization": pe_key}, timeout=10)
+            photos = r.json().get("photos", [])
+            if photos:
+                url = random.choice(photos[:5])["src"]["large"]
+        except Exception:
+            pass
+
+    # 3. Unsplash API
+    if not url and un_key:
+        try:
+            r = _req.get("https://api.unsplash.com/photos/random", params={
+                "query": query, "orientation": "squarish",
+            }, headers={"Authorization": f"Client-ID {un_key}"}, timeout=10)
+            url = r.json().get("urls", {}).get("regular")
+        except Exception:
+            pass
+
+    if not url:
+        return None
+    try:
+        resp = _req.get(url, timeout=15)
+        bg = Image.open(io.BytesIO(resp.content)).convert("RGB")
+        bg = bg.resize((SIZE, SIZE), Image.LANCZOS)
+        # Slightly darken + desaturate so text stays readable
+        bg = ImageEnhance.Brightness(bg).enhance(0.45)
+        bg = ImageEnhance.Color(bg).enhance(0.6)
+        return bg
+    except Exception:
+        return None
+
+
 def generate_informative_image(topic: dict) -> bytes:
-    img = Image.new("RGB", (SIZE, SIZE), NAVY)
+    # Try to fetch a real background photo
+    bg_query = topic.get("eyebrow", "digital marketing agency")
+    bg = _fetch_bg_image(bg_query)
+    if bg:
+        img = bg.copy()
+        # Dark navy overlay so text is readable
+        overlay = Image.new("RGBA", (SIZE, SIZE), (5, 12, 31, 195))
+        img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
+    else:
+        img = Image.new("RGB", (SIZE, SIZE), NAVY)
+
     draw = ImageDraw.Draw(img, "RGBA")
 
-    # Background grid — visible
+    # Grid lines over photo
     for i in range(0, SIZE, 40):
-        draw.line([(i, 0), (i, SIZE)], fill=(50, 110, 255, 55), width=1)
-        draw.line([(0, i), (SIZE, i)], fill=(50, 110, 255, 45), width=1)
+        draw.line([(i, 0), (i, SIZE)], fill=(50, 110, 255, 40), width=1)
+        draw.line([(0, i), (SIZE, i)], fill=(50, 110, 255, 30), width=1)
 
     # Diagonal accent lines
     for i in range(-SIZE, SIZE * 2, 100):
-        draw.line([(i, 0), (i + SIZE // 2, SIZE)], fill=(80, 140, 255, 22), width=1)
+        draw.line([(i, 0), (i + SIZE // 2, SIZE)], fill=(80, 140, 255, 18), width=1)
 
-    # Strong top-right blue glow
+    # Top-right blue glow
     glow = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     gd = ImageDraw.Draw(glow)
     for r in range(500, 0, -20):
-        alpha = int(55 * (1 - r / 500))
+        alpha = int(50 * (1 - r / 500))
         gd.ellipse([SIZE - 350 - r, -r, SIZE - 350 + r, r], fill=(40, 100, 255, alpha))
     # Bottom-left yellow accent glow
     for r in range(400, 0, -20):
-        alpha = int(40 * (1 - r / 400))
+        alpha = int(35 * (1 - r / 400))
         gd.ellipse([-r, SIZE - r, r, SIZE + r], fill=(245, 184, 0, alpha))
-    # Center subtle glow
-    for r in range(300, 0, -20):
-        alpha = int(15 * (1 - r / 300))
-        gd.ellipse([SIZE//2 - r, SIZE//2 - r, SIZE//2 + r, SIZE//2 + r], fill=(26, 86, 219, alpha))
     img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
     draw = ImageDraw.Draw(img, "RGBA")
 
