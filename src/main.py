@@ -18,8 +18,21 @@ from informative_post import generate_informative_image, build_caption
 from informative_topics import TOPICS
 
 POSTS_PER_RUN = int(os.environ.get("POSTS_PER_RUN", "1"))
-# 40% chance of informative post each run
 INFORMATIVE_RATIO = float(os.environ.get("INFORMATIVE_RATIO", "0.4"))
+
+# Track recently used topics this run to avoid repeats
+_used_topics: list[str] = []
+
+def _pick_topic():
+    """Pick a topic not used recently in this run."""
+    available = [t for t in TOPICS if t["eyebrow"] not in _used_topics]
+    if not available:
+        available = TOPICS  # reset if all used
+    topic = random.choice(available)
+    _used_topics.append(topic["eyebrow"])
+    if len(_used_topics) > max(len(TOPICS) // 2, 10):
+        _used_topics.pop(0)
+    return topic
 
 
 def run():
@@ -35,7 +48,7 @@ def run():
 
             if use_informative:
                 # ── Informative card post ──────────────────────────────
-                topic = random.choice(TOPICS)
+                topic = _pick_topic()
                 print(f"[CONTENT] Topic: {topic['eyebrow']}")
                 img_bytes = generate_informative_image(topic)
                 caption = build_caption(topic)

@@ -163,11 +163,15 @@ def _clean(t):
     # Remove non-ASCII (emojis etc.) but keep readable text
     return re.sub(r"[^\x00-\x7F]+", "", t).strip()
 
+def _strip_tags(t):
+    """Remove all hashtags and @mentions from text."""
+    return re.sub(r'[#@]\w+', '', t).strip()
+
 def _headline(text):
-    # Find the first line that has meaningful ASCII text (skip emoji-only lines)
+    # Strip hashtags before extracting headline so they never bleed in
+    text = _strip_tags(text)
     for line in text.strip().split("\n"):
         c = _clean(line)
-        # Strip leading punctuation/bullets that might remain
         c = re.sub(r"^[\s\-•*#>|]+", "", c).strip()
         if len(c) > 8:
             return c[:55] + ("..." if len(c) > 55 else "")
