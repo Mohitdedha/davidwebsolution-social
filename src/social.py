@@ -171,6 +171,58 @@ def _post_ig(text: str, image_url: str | None = None) -> str | None:
         return None
 
 
+def post_reel(video_url: str, caption: str) -> str | None:
+    """Post a Reel to Instagram. video_url must be publicly accessible MP4."""
+    ig_id = _get_ig_account_id()
+    if not ig_id:
+        print("[REEL] Skipping — IG account not found.")
+        return None
+    try:
+        # Step 1: Create reel container
+        r = requests.post(f"{BASE}/{ig_id}/media", data={
+            "video_url": video_url,
+            "caption": caption,
+            "media_type": "REELS",
+            "share_to_feed": "true",
+            "access_token": IG_USER_TOKEN,
+        }, timeout=30)
+        if r.status_code != 200:
+            print(f"[REEL] Container error {r.status_code}: {r.text[:300]}")
+            return None
+        container_id = r.json().get("id")
+        print(f"[REEL] Container: {container_id}")
+
+        # Step 2: Wait for processing (up to 60s)
+        import time as _time
+        for attempt in range(8):
+            _time.sleep(10)
+            sr = requests.get(f"{BASE}/{container_id}", params={
+                "fields": "status_code", "access_token": IG_USER_TOKEN,
+            }, timeout=15)
+            status = sr.json().get("status_code", "")
+            print(f"[REEL] Status: {status} (attempt {attempt+1})")
+            if status == "FINISHED": break
+            if status == "ERROR":
+                print("[REEL] Processing failed.")
+                return None
+
+        # Step 3: Publish
+        r2 = requests.post(f"{BASE}/{ig_id}/media_publish", data={
+            "creation_id": container_id,
+            "access_token": IG_USER_TOKEN,
+        }, timeout=30)
+        if r2.status_code == 200:
+            media_id = r2.json().get("id")
+            print(f"[REEL] Published: {media_id}")
+            return media_id
+        else:
+            print(f"[REEL] Publish error {r2.status_code}: {r2.text[:300]}")
+            return None
+    except Exception as e:
+        print(f"[REEL] Exception: {e}")
+        return None
+
+
 def _get_li_author() -> str | None:
     """Get LinkedIn author URN — company page if set, else personal profile."""
     headers = {"Authorization": f"Bearer {LI_TOKEN}"}

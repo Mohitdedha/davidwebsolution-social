@@ -163,9 +163,39 @@ def _fetch_bg_image(query: str) -> Image.Image | None:
         return None
 
 
+# IT/digital-specific search terms per topic eyebrow keyword
+_BG_QUERY_MAP = {
+    "GOOGLE ADS":        "google ads digital marketing laptop",
+    "TRUST":             "business professional handshake office",
+    "SOCIAL MEDIA":      "social media marketing smartphone screen",
+    "WEBSITE":           "web design laptop code screen",
+    "SEO":               "seo analytics dashboard computer",
+    "UGC ADS":           "video content creator smartphone studio",
+    "ECOMMERCE":         "ecommerce online shopping laptop",
+    "BRANDING":          "branding design office creative",
+    "AI":                "artificial intelligence technology digital",
+    "LINKEDIN":          "linkedin professional networking laptop",
+    "EMAIL":             "email marketing digital communication",
+    "WORDPRESS":         "wordpress website development coding",
+    "SHOPIFY":           "ecommerce shopify online store",
+    "REVENUE":           "business growth analytics dashboard",
+    "CONVERSION":        "website conversion rate optimization",
+    "CONTENT":           "content marketing digital strategy",
+    "LEAD":              "lead generation digital marketing funnel",
+}
+
+def _bg_query(eyebrow: str) -> str:
+    """Map topic eyebrow to a specific IT-related search query."""
+    key = eyebrow.upper().strip()
+    for k, v in _BG_QUERY_MAP.items():
+        if k in key:
+            return v
+    return "digital marketing technology office professional"
+
+
 def generate_informative_image(topic: dict) -> bytes:
-    # Try to fetch a real background photo
-    bg_query = topic.get("eyebrow", "digital marketing agency")
+    # Fetch IT-related background photo
+    bg_query = _bg_query(topic.get("eyebrow", ""))
     bg = _fetch_bg_image(bg_query)
     if bg:
         img = bg.copy()

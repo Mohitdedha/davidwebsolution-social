@@ -48,7 +48,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install groq requests Pillow -q
+        run: |
+          sudo apt-get install -y ffmpeg -q
+          pip install groq requests Pillow -q
 
       - name: Set schedule config
         run: |

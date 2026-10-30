@@ -13,12 +13,14 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 from content import generate_post
 from image import get_image, upload_to_imgbb
-from social import post_to_all
+from social import post_to_all, post_reel
 from informative_post import generate_informative_image, build_caption
 from informative_topics import TOPICS
+from reel_maker import generate_reel
 
-POSTS_PER_RUN = int(os.environ.get("POSTS_PER_RUN", "1"))
+POSTS_PER_RUN    = int(os.environ.get("POSTS_PER_RUN", "1"))
 INFORMATIVE_RATIO = float(os.environ.get("INFORMATIVE_RATIO", "0.4"))
+REEL_RATIO        = float(os.environ.get("REEL_RATIO", "0.3"))  # 30% chance of reel
 
 # Track recently used topics this run to avoid repeats
 _used_topics: list[str] = []
@@ -45,6 +47,39 @@ def run():
         try:
             use_informative = random.random() < INFORMATIVE_RATIO
             print(f"[TYPE] {'Informative card' if use_informative else 'Regular template'}")
+
+            use_reel = random.random() < REEL_RATIO
+            if use_informative and use_reel:
+                # ── Informative Reel ───────────────────────────────────
+                topic = _pick_topic()
+                print(f"[CONTENT] Reel topic: {topic['eyebrow']}")
+                caption = build_caption(topic)
+                video_bytes = generate_reel(topic)
+                if video_bytes:
+                    slug = f"dws-reel-{int(time.time())}.mp4"
+                    video_url = upload_to_imgbb(video_bytes, slug)
+                    if video_url:
+                        reel_id = post_reel(video_url, caption)
+                        if reel_id:
+                            success += 1
+                            print(f"[OK] Reel posted: {reel_id}")
+                        else:
+                            print("[WARN] Reel post failed — fallback to image")
+                            img_bytes = generate_informative_image(topic)
+                            image_url = upload_to_imgbb(img_bytes, f"dws-informative-{int(time.time())}.jpg")
+                            results = post_to_all(caption, image_url)
+                            if results.get("facebook") or results.get("instagram"):
+                                success += 1
+                    else:
+                        print("[WARN] Video upload failed")
+                else:
+                    # FFmpeg not available — fallback to image
+                    img_bytes = generate_informative_image(topic)
+                    image_url = upload_to_imgbb(img_bytes, f"dws-informative-{int(time.time())}.jpg")
+                    results = post_to_all(caption, image_url)
+                    if results.get("facebook") or results.get("instagram"):
+                        success += 1
+                continue
 
             if use_informative:
                 # ── Informative card post ──────────────────────────────
