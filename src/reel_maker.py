@@ -1,11 +1,79 @@
 """
 Reel generator for David Web Solution.
 Creates a 1080x1920 vertical MP4 (15s) using Pillow frames + FFmpeg.
-No moviepy needed — pure FFmpeg + PIL.
+Audio: gTTS voiceover + royalty-free tech background music (mixed with FFmpeg).
+No moviepy needed — pure FFmpeg + PIL + gTTS.
 """
 import io, os, random, subprocess, tempfile, shutil
 from PIL import Image, ImageDraw, ImageFont, ImageFilter, ImageEnhance
 import requests as _req
+
+# Royalty-free IT/tech ambient music from Pixabay (CC0 license)
+# These are direct MP3 download URLs — no API key needed
+_TECH_MUSIC_URLS = [
+    "https://cdn.pixabay.com/audio/2024/03/13/audio_c8d84b9892.mp3",  # corporate tech
+    "https://cdn.pixabay.com/audio/2023/10/20/audio_b5b8b2b4e0.mp3",  # digital innovation
+    "https://cdn.pixabay.com/audio/2024/01/15/audio_a8f94c2b5d.mp3",  # modern business
+    "https://cdn.pixabay.com/audio/2023/08/16/audio_d18e4e0b26.mp3",  # tech background
+    "https://cdn.pixabay.com/audio/2023/11/07/audio_e9c2f18a3b.mp3",  # startup vibe
+]
+
+
+def _fetch_music(tmpdir: str) -> str | None:
+    """Download a random tech background track. Returns local path or None."""
+    url = random.choice(_TECH_MUSIC_URLS)
+    try:
+        r = _req.get(url, timeout=15, stream=True)
+        if r.status_code == 200:
+            path = os.path.join(tmpdir, "bg_music.mp3")
+            with open(path, "wb") as f:
+                for chunk in r.iter_content(8192):
+                    f.write(chunk)
+            print(f"[REEL] Background music downloaded")
+            return path
+    except Exception as e:
+        print(f"[REEL] Music fetch failed: {e}")
+    return None
+
+
+def _make_voiceover(topic: dict, tmpdir: str) -> str | None:
+    """Generate TTS voiceover using gTTS. Returns local MP3 path or None."""
+    try:
+        from gtts import gTTS
+    except ImportError:
+        print("[REEL] gTTS not installed — no voiceover")
+        return None
+
+    # Build a natural-sounding script
+    lines = []
+    eyebrow = topic.get("eyebrow", "").title()
+    headline = topic.get("headline", [])
+    sub = topic.get("sub", "")
+    pills = topic.get("pills", [])
+    cta = topic.get("cta", "Contact us today")
+
+    if eyebrow:
+        lines.append(eyebrow + ".")
+    if headline:
+        lines.append(" ".join(headline) + ".")
+    if sub:
+        lines.append(sub + ".")
+    for title, desc in pills[:3]:
+        lines.append(f"{title}. {desc}.")
+    lines.append(cta + ". David Web Solution.")
+
+    script = " ".join(lines)
+    print(f"[REEL] TTS script: {script[:100]}...")
+
+    try:
+        tts = gTTS(text=script, lang="en", slow=False)
+        vo_path = os.path.join(tmpdir, "voiceover.mp3")
+        tts.save(vo_path)
+        print("[REEL] Voiceover generated")
+        return vo_path
+    except Exception as e:
+        print(f"[REEL] TTS failed: {e}")
+        return None
 
 SIZE_W, SIZE_H = 1080, 1920
 FPS     = 30
@@ -236,21 +304,70 @@ def generate_reel(topic: dict) -> bytes | None:
             frame = _build_frame(topic, i, bg_base, color)
             frame.save(os.path.join(tmpdir, f"frame_{i:05d}.png"))
 
-        out_path = os.path.join(tmpdir, "reel.mp4")
-        cmd = [
+        silent_path = os.path.join(tmpdir, "silent.mp4")
+        out_path    = os.path.join(tmpdir, "reel.mp4")
+
+        # Step 1: Render silent video
+        cmd_video = [
             "ffmpeg", "-y",
             "-framerate", str(FPS),
             "-i", os.path.join(tmpdir, "frame_%05d.png"),
             "-c:v", "libx264", "-pix_fmt", "yuv420p",
             "-crf", "23", "-preset", "fast",
-            out_path
+            silent_path,
         ]
-        result = subprocess.run(cmd, capture_output=True, timeout=120)
-        if result.returncode != 0:
-            print(f"[REEL] FFmpeg error: {result.stderr.decode()[:300]}")
+        r1 = subprocess.run(cmd_video, capture_output=True, timeout=120)
+        if r1.returncode != 0:
+            print(f"[REEL] FFmpeg video error: {r1.stderr.decode()[:300]}")
             return None
 
-        with open(out_path, "rb") as f:
+        # Step 2: Generate audio (voiceover + background music)
+        vo_path    = _make_voiceover(topic, tmpdir)
+        music_path = _fetch_music(tmpdir)
+
+        if vo_path and music_path:
+            # Mix: voiceover (full) + music (18% volume), trim to video length
+            cmd_audio = [
+                "ffmpeg", "-y",
+                "-i", silent_path,
+                "-i", vo_path,
+                "-i", music_path,
+                "-filter_complex",
+                f"[1:a]apad=whole_dur={DURATION}[vo];"
+                f"[2:a]aloop=loop=-1:size=44100,atrim=0:{DURATION},volume=0.18[bg];"
+                "[vo][bg]amix=inputs=2:duration=first[aout]",
+                "-map", "0:v", "-map", "[aout]",
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+                "-shortest", out_path,
+            ]
+            r2 = subprocess.run(cmd_audio, capture_output=True, timeout=120)
+            if r2.returncode != 0:
+                print(f"[REEL] Audio mix error: {r2.stderr.decode()[:200]} — falling back to VO only")
+                # Fallback: voiceover only
+                cmd_vo = [
+                    "ffmpeg", "-y",
+                    "-i", silent_path, "-i", vo_path,
+                    "-map", "0:v", "-map", "1:a",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+                    "-shortest", out_path,
+                ]
+                subprocess.run(cmd_vo, capture_output=True, timeout=60)
+        elif vo_path:
+            # Voiceover only (no music)
+            cmd_vo = [
+                "ffmpeg", "-y",
+                "-i", silent_path, "-i", vo_path,
+                "-map", "0:v", "-map", "1:a",
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "128k",
+                "-shortest", out_path,
+            ]
+            subprocess.run(cmd_vo, capture_output=True, timeout=60)
+        else:
+            # No audio available — use silent video as final
+            out_path = silent_path
+
+        final = out_path if os.path.exists(out_path) else silent_path
+        with open(final, "rb") as f:
             video_bytes = f.read()
         print(f"[REEL] Generated: {len(video_bytes)//1024}KB")
         return video_bytes
