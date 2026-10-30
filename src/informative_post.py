@@ -169,8 +169,8 @@ def generate_informative_image(topic: dict) -> bytes:
     bg = _fetch_bg_image(bg_query)
     if bg:
         img = bg.copy()
-        # Dark navy overlay so text is readable
-        overlay = Image.new("RGBA", (SIZE, SIZE), (5, 12, 31, 195))
+        # Dark navy overlay — less opaque so photo shows through
+        overlay = Image.new("RGBA", (SIZE, SIZE), (5, 12, 31, 130))
         img = Image.alpha_composite(img.convert("RGBA"), overlay).convert("RGB")
     else:
         img = Image.new("RGB", (SIZE, SIZE), NAVY)
