@@ -884,18 +884,20 @@ def _tpl_grow_with_us(hl, bullets, cta, color, photo=None, intro_label="WE OFFER
         # Number large
         fn  = _font(48)
         num = f"0{i+1}"
-        draw.text((PAD, cy+card_h//2-28), num, font=fn, fill=sc)
+        num_y = cy + card_h//2 - 28
+        draw.text((PAD, num_y), num, font=fn, fill=sc)
         nw_ = draw.textbbox((0,0),num,font=fn)[2]
-        # Title
+        # Title — aligned with number top
         ft  = _font(27)
         bul = bullets[i] if i < len(bullets) else descs[i][:30]
+        tx  = PAD + nw_ + 20
         for tl in _wrap(bul, ft, W-PAD-nw_-PAD-30, draw, 1):
-            draw.text((PAD+nw_+20, cy+10), tl, font=ft, fill=WHITE)
-        # Desc
+            draw.text((tx, num_y), tl, font=ft, fill=WHITE)
+        # Desc — directly below title
         fd  = _font(20, False)
-        dy_ = cy+46
+        dy_ = num_y + 34
         for dl in _wrap(descs[i], fd, W-PAD-nw_-PAD-30, draw, 2):
-            draw.text((PAD+nw_+20, dy_), dl, font=fd, fill=MUTED); dy_+=26
+            draw.text((tx, dy_), dl, font=fd, fill=MUTED); dy_ += 26
         # Divider
         if i < 2:
             draw.rectangle([PAD, cy+card_h-1, W-PAD, cy+card_h], fill=(28,34,72))
