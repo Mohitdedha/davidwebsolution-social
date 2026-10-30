@@ -104,15 +104,17 @@ CTA_OPTIONS = [
     "Get a FREE quote",
 ]
 
-PILLAR_COLORS = {
-    "wordpress_tip":    (0,   115, 170),   # blue
-    "seo_tip":          (16,  160,  83),   # green
-    "ai_video_ugc":     (139,  92, 246),   # purple
-    "web_mistake":      (220,  50,  50),   # red
-    "client_result":    (234, 110,  12),   # orange
-    "tool_spotlight":   (234, 110,  12),   # orange
-    "industry_insight": (37,   99, 235),   # blue
+# Each pillar has multiple palette options — random pick per post so no two posts look same
+PILLAR_COLOR_POOLS = {
+    "wordpress_tip":    [(0,115,170), (6,182,212), (59,130,246), (14,165,233)],   # blues
+    "seo_tip":          [(16,160,83), (5,150,105), (132,204,22), (20,184,166)],   # greens/teals
+    "ai_video_ugc":     [(139,92,246),(168,85,247),(217,70,239),(99,102,241)],    # purples
+    "web_mistake":      [(220,50,50), (239,68,68), (251,113,133),(234,56,76)],    # reds/pinks
+    "client_result":    [(234,110,12),(249,115,22),(245,158,11),(234,88,12)],     # oranges
+    "tool_spotlight":   [(234,110,12),(245,158,11),(202,138,4), (217,119,6)],     # ambers
+    "industry_insight": [(37,99,235), (79,70,229), (99,102,241),(59,130,246)],   # indigos/blues
 }
+PILLAR_COLORS = {k: v[0] for k, v in PILLAR_COLOR_POOLS.items()}  # fallback
 
 PILLAR_INTRO = {
     "wordpress_tip":    "PRO TIP",
@@ -1028,7 +1030,8 @@ def design_post(pillar: str, post_text: str, photo_bytes: bytes = None) -> bytes
     hl    = _headline(post_text)
     blts  = _bullets(post_text)
     cta   = random.choice(CTA_OPTIONS)
-    color = PILLAR_COLORS.get(pillar, (234, 110, 12))
+    pool  = PILLAR_COLOR_POOLS.get(pillar, [(234, 110, 12)])
+    color = random.choice(pool)
     intro = PILLAR_INTRO.get(pillar, "WE OFFER")
 
     photo = _load_photo(photo_bytes) if photo_bytes else None
