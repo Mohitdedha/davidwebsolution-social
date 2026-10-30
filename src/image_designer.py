@@ -598,7 +598,7 @@ def _gh(img, x0, y0, x1, y1, c1, c2):
 def _hdr(img, color, logo_white=True):
     """Draw premium top header bar with logo."""
     W, H = img.size
-    HH   = 100
+    HH   = 142
     draw = ImageDraw.Draw(img)
     draw.rectangle([0,0,W,HH], fill=(6,8,22))
     draw.rectangle([0,HH-3,W,HH], fill=color)   # color bottom rule
