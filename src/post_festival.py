@@ -119,7 +119,7 @@ def make_image(f, logo_path, out_path):
             if bbox:
                 logo = logo.crop(bbox)
             # Scale to 56px height
-            lh = 110
+            lh = 75
             lw = int(logo.width * lh / logo.height)
             logo = logo.resize((lw, lh), Image.LANCZOS)
             img.paste(logo, (52, 32), logo)
@@ -146,15 +146,15 @@ def make_image(f, logo_path, out_path):
     # ── DECORATIVE SYMBOL (center top) ──
     fn_sym = load_font(32, True)
     sym_text = "* " + f["name"].upper() + " *"
-    cy_start = 310
+    cy_start = 200
     h = draw_centered(draw, sym_text, cy_start, fn_sym, GOLD2, shadow=False)
 
     # Decorative diya SVG-like shape (drawn with Pillow)
     # Flame - teardrop polygon (not oval)
     cx, cy2 = SIZE//2, cy_start + 70
-    pts = [(cx,cy2-60),(cx+18,cy2-25),(cx+12,cy2+8),(cx-12,cy2+8),(cx-18,cy2-25)]
+    pts = [(cx,cy2-80),(cx+35,cy2-30),(cx+22,cy2+10),(cx-22,cy2+10),(cx-35,cy2-30)]
     draw.polygon(pts, fill=(*GOLD2, 240))
-    pts2 = [(cx,cy2-50),(cx+9,cy2-20),(cx+6,cy2+4),(cx-6,cy2+4),(cx-9,cy2-20)]
+    pts2 = [(cx,cy2-65),(cx+18,cy2-20),(cx+11,cy2+6),(cx-11,cy2+6),(cx-18,cy2-20)]
     draw.polygon(pts2, fill=(255,240,160))
     # Bowl
     draw.ellipse([cx-55, cy2+5, cx+55, cy2+55], fill=(180,110,15))
