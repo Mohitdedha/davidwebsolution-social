@@ -33,7 +33,7 @@ Output ONLY the hashtags, nothing else."""
 def fetch_trending_hashtags() -> list[str]:
     client = Groq(api_key=os.environ["GROQ_API_KEY"])
     resp = client.chat.completions.create(
-        model="llama3-8b-8192",
+                model="llama-3.1-8b-instant",
         messages=[{"role": "user", "content": PROMPT}],
         temperature=0.7,
         max_tokens=600,
