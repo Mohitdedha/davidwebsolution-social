@@ -1,19 +1,21 @@
-name: Festival Post DWS Instagram
+name: Festival Post — DWS Instagram
 
 on:
+  # Manual trigger with inputs
   workflow_dispatch:
     inputs:
       festival:
-        description: 'Festival name (e.g. Dhanteras, Diwali, Holi) leave blank to auto-detect today'
+        description: 'Festival name (e.g. Dhanteras, Diwali, Holi) — leave blank to auto-detect today'
         required: false
         default: ''
       dry_run:
-        description: 'Dry run generate image only do not post to Instagram'
+        description: 'Dry run (generate image only, do not post)'
         required: false
         default: 'false'
         type: choice
         options: ['false', 'true']
 
+  # Daily check at 7:00 AM IST (1:30 AM UTC)
   schedule:
     - cron: '30 1 * * *'
 
@@ -34,32 +36,46 @@ jobs:
       - name: Install system fonts
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y fonts-liberation fonts-noto fonts-noto-color-emoji -q
+          sudo apt-get install -y fonts-liberation -q
 
-      - name: Install Python dependencies
+      - name: Install dependencies
         run: pip install pillow numpy requests
+
+      - name: Determine festival flag
+        id: festival_flag
+        run: |
+          FESTIVAL="${{ github.event.inputs.festival }}"
+          if [ -n "$FESTIVAL" ]; then
+            echo "flag=--festival \"$FESTIVAL\"" >> $GITHUB_OUTPUT
+          else
+            echo "flag=--auto" >> $GITHUB_OUTPUT
+          fi
 
       - name: Run festival post script
         env:
           DWS_IG_ACCOUNT_ID: ${{ secrets.DWS_IG_ACCOUNT_ID }}
           DWS_IG_USER_TOKEN: ${{ secrets.DWS_IG_USER_TOKEN }}
-          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
-          LOGO_PATH: posts/logo.jpg
+          IMGBB_API_KEY:      ${{ secrets.IMGBB_API_KEY }}
+          LOGO_PATH:          posts/logo.jpg
         run: |
           DRY_RUN="${{ github.event.inputs.dry_run }}"
           FESTIVAL="${{ github.event.inputs.festival }}"
+
           CMD="python src/post_festival.py"
+
           if [ -n "$FESTIVAL" ]; then
-            CMD="$CMD --festival '$FESTIVAL'"
+            CMD="$CMD --festival \"$FESTIVAL\""
           else
             CMD="$CMD --auto"
           fi
+
           if [ "$DRY_RUN" = "true" ]; then
             CMD="$CMD --dry-run"
           fi
+
           eval $CMD
 
-      - name: Upload generated image as artifact
+      - name: Upload generated image (artifact)
         uses: actions/upload-artifact@v4
         if: always()
         with:
