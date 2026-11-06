@@ -151,14 +151,14 @@ def make_image(f, logo_path, out_path):
 
     # Decorative diya SVG-like shape (drawn with Pillow)
     # Flame - teardrop polygon (not oval)
-    cx, cy2 = SIZE//2, cy_start + 70
+    cx, cy2 = SIZE//2, cy_start + 150
     pts = [(cx,cy2-80),(cx+35,cy2-30),(cx+22,cy2+10),(cx-22,cy2+10),(cx-35,cy2-30)]
     draw.polygon(pts, fill=(*GOLD2, 240))
     pts2 = [(cx,cy2-65),(cx+18,cy2-20),(cx+11,cy2+6),(cx-11,cy2+6),(cx-18,cy2-20)]
     draw.polygon(pts2, fill=(255,240,160))
     # Bowl
-    draw.ellipse([cx-55, cy2+5, cx+55, cy2+55], fill=(180,110,15))
-    draw.arc([cx-55, cy2+5, cx+55, cy2+55], 0, 180, fill=(*GOLD, 180), width=2)
+    draw.ellipse([cx-80, cy2+5, cx+80, cy2+80], fill=(180,110,15))
+    draw.arc([cx-80, cy2+5, cx+80, cy2+80], 0, 180, fill=(*GOLD, 180), width=2)
     # Sparkles
     for sx, sy in [(cx-70, cy2-30),(cx+65, cy2-20),(cx+40, cy2-55),(cx-45, cy2-50)]:
         draw.ellipse([sx-3,sy-3,sx+3,sy+3], fill=(*GOLD2, 160))
@@ -196,6 +196,10 @@ def make_image(f, logo_path, out_path):
         h = draw_centered(draw, ln, y_msg, fn_msg, (210, 220, 245))
         y_msg += h + 8
 
+    # Hashtags
+    fn_hash = load_font(20)
+    htag = HASHTAGS.get(f["name"], "#DavidWebSolution")
+    draw_centered(draw, htag[:65], y_msg + 25, fn_hash, (*GOLD, 85))
     # ── FOOTER ──
     fn_ft = load_font(22)
     fn_cta = load_font(20, True)
