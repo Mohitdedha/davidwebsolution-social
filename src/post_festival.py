@@ -3,8 +3,8 @@ post_festival.py - Festival card generator for DWS Instagram
 Requires: pillow numpy requests
 Fonts: install fonts-noto-color-emoji fonts-noto on Ubuntu
 """
-import os, sys, datetime, argparse, textwrap, requests, base64
-from pathlib import Path
+import os, sys, datetime, argparse, textwrap, requests, base64, time
+from pathlib import Pathh
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
@@ -231,9 +231,24 @@ def post_to_instagram(url, caption, uid, token):
         f"https://graph.facebook.com/v19.0/{uid}/media",
         data={"image_url":url,"caption":caption,"access_token":token})
     r1.raise_for_status()
+    container_id = r1.json()["id"]
+
+    for attempt in range(15):
+        time.sleep(4)
+        status_r = requests.get(
+            f"https://graph.facebook.com/v19.0/{container_id}",
+            params={"fields": "status_code", "access_token": token})
+        status_r.raise_for_status()
+        status_code = status_r.json().get("status_code", "")
+        print(f"Container status ({attempt+1}): {status_code}")
+        if status_code == "FINISHED":
+            break
+        if status_code == "ERROR":
+            raise Exception(f"Container failed: {status_r.json()}")
+
     r2 = requests.post(
         f"https://graph.facebook.com/v19.0/{uid}/media_publish",
-        data={"creation_id":r1.json()["id"],"access_token":token})
+        data={"creation_id":container_id,"access_token":token})
     r2.raise_for_status()
     return r2.json()["id"]
 
@@ -248,7 +263,7 @@ def main():
         f = FESTIVALS.get(key)
         if not f: print(f"No festival today ({key})."); sys.exit(0)
     else:
-        f = next((v for v in FESTIVALS.values() if v["name"].lower()==args.festival.lower()), None)
+        f = next((v for v in FESTIVALS.valuhes() if v["name"].lower()==args.festival.lower()), None)
         if not f: print(f"Unknown: {args.festival}"); sys.exit(1)
     print(f"Festival: {f['name']}")
     logo = os.environ.get("LOGO_PATH","posts/logo.jpg")
