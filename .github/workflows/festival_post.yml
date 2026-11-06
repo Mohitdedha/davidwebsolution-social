@@ -1,0 +1,63 @@
+name: Festival Post DWS Instagram
+
+on:
+  workflow_dispatch:
+    inputs:
+      festival:
+        description: 'Festival name (e.g. Dhanteras, Diwali, Holi) leave blank to auto-detect today'
+        required: false
+        default: ''
+      dry_run:
+        description: 'Dry run generate image only do not post'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
+
+  schedule:
+    - cron: '30 1 * * *'
+
+jobs:
+  post-festival:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pillow numpy requests
+
+      - name: Run festival post script
+        env:
+          DWS_IG_ACCOUNT_ID: ${{ secrets.DWS_IG_ACCOUNT_ID }}
+          DWS_IG_USER_TOKEN: ${{ secrets.DWS_IG_USER_TOKEN }}
+          IMGBB_API_KEY: ${{ secrets.IMGBB_API_KEY }}
+          LOGO_PATH: posts/logo.jpg
+        run: |
+          DRY_RUN="${{ github.event.inputs.dry_run }}"
+          FESTIVAL="${{ github.event.inputs.festival }}"
+          CMD="python src/post_festival.py"
+          if [ -n "$FESTIVAL" ]; then
+            CMD="$CMD --festival '$FESTIVAL'"
+          else
+            CMD="$CMD --auto"
+          fi
+          if [ "$DRY_RUN" = "true" ]; then
+            CMD="$CMD --dry-run"
+          fi
+          eval $CMD
+
+      - name: Upload generated image
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: festival-post-image
+          path: /tmp/festival_*.jpg
+          if-no-files-found: ignore
