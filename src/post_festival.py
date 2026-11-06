@@ -4,7 +4,7 @@ Requires: pillow numpy requests
 Fonts: install fonts-noto-color-emoji fonts-noto on Ubuntu
 """
 import os, sys, datetime, argparse, textwrap, requests, base64, time
-from pathlib import Pathh
+from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 
@@ -122,7 +122,7 @@ def make_image(f, logo_path, out_path):
             if bbox:
                 logo = logo.crop(bbox)
             # Scale to 56px height
-            lh = 56
+            lh = 110
             lw = int(logo.width * lh / logo.height)
             logo = logo.resize((lw, lh), Image.LANCZOS)
             img.paste(logo, (52, 32), logo)
@@ -263,7 +263,7 @@ def main():
         f = FESTIVALS.get(key)
         if not f: print(f"No festival today ({key})."); sys.exit(0)
     else:
-        f = next((v for v in FESTIVALS.valuhes() if v["name"].lower()==args.festival.lower()), None)
+        f = next((v for v in FESTIVALS.values() if v["name"].lower()==args.festival.lower()), None)
         if not f: print(f"Unknown: {args.festival}"); sys.exit(1)
     print(f"Festival: {f['name']}")
     logo = os.environ.get("LOGO_PATH","posts/logo.jpg")
