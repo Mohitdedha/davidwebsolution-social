@@ -82,7 +82,7 @@ def draw_centered(draw, text, y, font, color, shadow=False):
     return bbox[3]-bbox[1]
 
 def make_image(f, logo_path, out_path):
-    img = Image.new("RGB", (SIZE, SIZE), NAVY)
+    img = Image.new("RGBA", (SIZE, SIZE), (*NAVY, 255))
     draw = ImageDraw.Draw(img)
 
     # Gradient background
@@ -216,7 +216,7 @@ def make_image(f, logo_path, out_path):
     draw.rounded_rectangle([bx,by,bx+bw,by+bh], radius=18, fill=GOLD2)
     draw.text((bx+16, by+8), cta, font=fn_cta, fill=NAVY)
 
-    img.save(out_path, "JPEG", quality=95)
+    img.convert("RGB").save(out_path, "JPEG", quality=95)
     print(f"Saved: {out_path}")
     return out_path
 
