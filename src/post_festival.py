@@ -146,7 +146,7 @@ def make_image(f, logo_path, out_path):
     # ── DECORATIVE SYMBOL (center top) ──
     fn_sym = load_font(32, True)
     sym_text = "* " + f["name"].upper() + " *"
-    cy_start = 200
+    cy_start = 250
     h = draw_centered(draw, sym_text, cy_start, fn_sym, GOLD2, shadow=False)
 
     # Decorative diya SVG-like shape (drawn with Pillow)
@@ -166,7 +166,7 @@ def make_image(f, logo_path, out_path):
     # ── HEADLINE ──
     fn_title = load_font(80, True)
     fn_title_sm = load_font(60, True)
-    y_title = cy2 + 70
+    y_title = cy2 + 100
 
     words = f["name"].split()
     if len(f["name"]) <= 10:
