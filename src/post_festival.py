@@ -91,10 +91,7 @@ def make_image(f, logo_path, out_path):
         c = tuple(int(NAVY[i] + (NAVY2[i]-NAVY[i])*t) for i in range(3))
         draw.line([(0,y),(SIZE,y)], fill=c)
 
-    # Radial gold glow top-right
-    for r in range(300, 0, -10):
-        alpha = int(8 * (1 - r/300))
-        draw.ellipse([SIZE-r-100, -r//2, SIZE+r-100, r//2+100], fill=(*GOLD, alpha))
+
 
     # Border frame
     pad = 30
