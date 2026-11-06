@@ -146,21 +146,19 @@ def make_image(f, logo_path, out_path):
     # ── DECORATIVE SYMBOL (center top) ──
     fn_sym = load_font(32, True)
     sym_text = "* " + f["name"].upper() + " *"
-    cy_start = 160
+    cy_start = 310
     h = draw_centered(draw, sym_text, cy_start, fn_sym, GOLD2, shadow=False)
 
     # Decorative diya SVG-like shape (drawn with Pillow)
-    # Flame
+    # Flame - teardrop polygon (not oval)
     cx, cy2 = SIZE//2, cy_start + 70
-    draw.ellipse([cx-18, cy2-50, cx+18, cy2+10], fill=(*GOLD2, 230))
-    draw.ellipse([cx-10, cy2-45, cx+10, cy2+5],  fill=(255,245,180))
+    pts = [(cx,cy2-60),(cx+18,cy2-25),(cx+12,cy2+8),(cx-12,cy2+8),(cx-18,cy2-25)]
+    draw.polygon(pts, fill=(*GOLD2, 240))
+    pts2 = [(cx,cy2-50),(cx+9,cy2-20),(cx+6,cy2+4),(cx-6,cy2+4),(cx-9,cy2-20)]
+    draw.polygon(pts2, fill=(255,240,160))
     # Bowl
     draw.ellipse([cx-55, cy2+5, cx+55, cy2+55], fill=(180,110,15))
     draw.arc([cx-55, cy2+5, cx+55, cy2+55], 0, 180, fill=(*GOLD, 180), width=2)
-    # Glow ring
-    for r2 in [70, 85, 100]:
-        alpha = max(0, 40 - (r2-70)*2)
-        draw.ellipse([cx-r2, cy2-r2//2, cx+r2, cy2+r2//2], outline=(*GOLD2, alpha), width=1)
     # Sparkles
     for sx, sy in [(cx-70, cy2-30),(cx+65, cy2-20),(cx+40, cy2-55),(cx-45, cy2-50)]:
         draw.ellipse([sx-3,sy-3,sx+3,sy+3], fill=(*GOLD2, 160))
