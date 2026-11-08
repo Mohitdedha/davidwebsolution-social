@@ -3,10 +3,12 @@ David Web Solution — Social Media Auto-Poster
 Runs via GitHub Actions 10x/day. Posts to Facebook + Instagram.
 Mix: 40% informative card posts, 60% regular Pillow template posts.
 """
+import io
 import os
 import sys
 import time
 import random
+import datetime
 import traceback
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -17,26 +19,36 @@ from social import post_to_all, post_reel
 from informative_post import generate_informative_image, build_caption
 from informative_topics import TOPICS
 from reel_maker import generate_reel
-from festival_calendar import get_today_festival
-from festival_post import generate_festival_post, build_festival_caption
+from festival import get_today_festival, build_festival_caption
+from image_designer import _tpl_festival
 
-POSTS_PER_RUN    = int(os.environ.get("POSTS_PER_RUN", "1"))
+POSTS_PER_RUN     = int(os.environ.get("POSTS_PER_RUN", "1"))
 INFORMATIVE_RATIO = float(os.environ.get("INFORMATIVE_RATIO", "0.4"))
-REEL_RATIO        = float(os.environ.get("REEL_RATIO", "0.3"))  # 30% chance of reel
+REEL_RATIO        = float(os.environ.get("REEL_RATIO", "0.3"))
 
-# Track recently used topics this run to avoid repeats
-_used_topics: list[str] = []
+# ── Cross-run topic rotation: seed by (date_ordinal * 100 + run_number)
+# so each of the 30 topics cycles without repeating across runs.
+_RUN_NUM   = int(os.environ.get("GITHUB_RUN_NUMBER", "0"))
+_DATE_ORD  = datetime.date.today().toordinal()
+_topic_rng = random.Random(_DATE_ORD * 100 + _RUN_NUM)
+_shuffled_topics = list(TOPICS)
+_topic_rng.shuffle(_shuffled_topics)
+_topic_idx = 0
 
 def _pick_topic():
-    """Pick a topic not used recently in this run."""
-    available = [t for t in TOPICS if t["eyebrow"] not in _used_topics]
-    if not available:
-        available = TOPICS  # reset if all used
-    topic = random.choice(available)
-    _used_topics.append(topic["eyebrow"])
-    if len(_used_topics) > max(len(TOPICS) // 2, 10):
-        _used_topics.pop(0)
+    """Pick next topic from date+run-seeded shuffle — no repeats within a day's runs."""
+    global _topic_idx
+    topic = _shuffled_topics[_topic_idx % len(_shuffled_topics)]
+    _topic_idx += 1
     return topic
+
+
+def _festival_image_bytes(fest: dict) -> bytes:
+    """Generate festival card image and return as JPEG bytes."""
+    img = _tpl_festival(fest)
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG", quality=92)
+    return buf.getvalue()
 
 
 def run():
@@ -44,20 +56,22 @@ def run():
     success = 0
     errors  = []
 
-    # ── Festival check: if today (or tomorrow) is a festival, post it first ──
+    # ── Festival check: if today is a festival, post greeting card first ──
     festival = get_today_festival()
     if festival:
-        print(f"\n[FESTIVAL] {festival['name']} detected — posting festival greeting")
+        print(f"\n[FESTIVAL] {festival['label']} detected — posting festival greeting")
         try:
-            img_bytes = generate_festival_post(festival)
+            img_bytes = _festival_image_bytes(festival)
             caption   = build_festival_caption(festival)
-            image_url = upload_to_imgbb(img_bytes, f"dws-festival-{festival['name'].replace(' ','-')}.jpg")
+            slug      = festival['key'].lower().replace('_', '-')
+            image_url = upload_to_imgbb(img_bytes, f"dws-festival-{slug}.jpg")
             results   = post_to_all(caption, image_url)
             if results.get("facebook") or results.get("instagram"):
                 success += 1
                 print(f"[FESTIVAL] Posted. FB={results['facebook']} IG={results['instagram']}")
         except Exception as e:
             print(f"[FESTIVAL] Error: {e}")
+            traceback.print_exc()
         time.sleep(8)
 
     for i in range(POSTS_PER_RUN):

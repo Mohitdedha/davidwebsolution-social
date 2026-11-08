@@ -127,13 +127,13 @@ PILLAR_INTRO = {
 }
 
 PILLAR_TEMPLATES = {
-    "wordpress_tip":    ["dark_pro", "agency_split"],
-    "seo_tip":          ["dark_pro", "agency_split"],
-    "ai_video_ugc":     ["dark_pro", "agency_split"],
-    "web_mistake":      ["dark_pro", "agency_split"],
-    "client_result":    ["dark_pro", "agency_split"],
-    "tool_spotlight":   ["dark_pro", "agency_split"],
-    "industry_insight": ["dark_pro", "agency_split"],
+    "wordpress_tip":    ["dark_pro"],
+    "seo_tip":          ["dark_pro"],
+    "ai_video_ugc":     ["dark_pro"],
+    "web_mistake":      ["dark_pro"],
+    "client_result":    ["dark_pro"],
+    "tool_spotlight":   ["dark_pro"],
+    "industry_insight": ["dark_pro"],
 }
 
 # ── Fonts ─────────────────────────────────────────────────────────────────────
@@ -568,6 +568,114 @@ def _tpl_dark_pro(hl, bullets, cta, color, photo=None, intro_label="PRO TIP"):
     iw   = draw.textbbox((0, 0), info, font=_font(17, False))[2]
     draw.text((SIZE - PAD - iw, SIZE - FOOT_H + (FOOT_H - 20) // 2),
               info, font=_font(17, False), fill=MUTED)
+
+    return img
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Template — FESTIVAL CARD
+# Dark gradient bg per festival, logo top-left, centered greeting + emoji
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def _tpl_festival(fest: dict) -> Image.Image:
+    """
+    Generate a 1080x1080 festival greeting card.
+    fest dict: key, label, emoji, line1, line2, tagline, bg1, bg2, accent
+    """
+    WHITE  = (255, 255, 255)
+    bg1    = fest["bg1"]
+    bg2    = fest["bg2"]
+    accent = fest["accent"]
+
+    img  = Image.new("RGB", (SIZE, SIZE), bg1)
+    _grad(img, 0, 0, SIZE, SIZE, bg1, bg2)
+    draw = ImageDraw.Draw(img)
+
+    # Decorative sparkle dots
+    import random as _rnd
+    _rnd.seed(42)
+    for _ in range(18):
+        x = _rnd.randint(0, SIZE)
+        y = _rnd.randint(0, SIZE)
+        r = _rnd.randint(2, 6)
+        a_val = _rnd.randint(60, 160)
+        dot_ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+        ImageDraw.Draw(dot_ov).ellipse([x, y, x+r, y+r], fill=(*accent, a_val))
+        img = Image.alpha_composite(img.convert("RGBA"), dot_ov).convert("RGB")
+    draw = ImageDraw.Draw(img)
+
+    # Soft glow circle top-right
+    glow = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(glow).ellipse([SIZE-320, -120, SIZE+80, 320],
+                                  fill=(*accent, 18))
+    img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
+    draw = ImageDraw.Draw(img)
+
+    # Header: logo left + handle right
+    HEADER_H = 120
+    img = _paste_logo(img, 44, (HEADER_H - 60) // 2, white=True)
+    draw = ImageDraw.Draw(img)
+    hf  = _font(20, False)
+    hw  = draw.textbbox((0, 0), BRAND_TAG, font=hf)[2]
+    draw.text((SIZE - 44 - hw, (HEADER_H - 22) // 2),
+              BRAND_TAG, font=hf, fill=(*WHITE, 180))
+
+    # Thin accent line under header
+    draw.rectangle([44, HEADER_H - 2, SIZE - 44, HEADER_H], fill=(*accent, 80))
+
+    # Center body — pill label
+    CY = HEADER_H + (SIZE - HEADER_H - 110) // 2 - 60
+    pf  = _font(18)
+    pw  = draw.textbbox((0, 0), fest["label"], font=pf)[2] + 32
+    px0 = (SIZE - pw) // 2
+    # Pill background
+    pill_ov = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(pill_ov).rounded_rectangle(
+        [px0, CY, px0+pw, CY+36], radius=18,
+        fill=(*accent, 38), outline=(*accent, 90), width=1)
+    img = Image.alpha_composite(img.convert("RGBA"), pill_ov).convert("RGB")
+    draw = ImageDraw.Draw(img)
+    draw.text((px0 + 16, CY + 8), fest["label"], font=pf, fill=accent)
+    CY += 54
+
+    # Emoji (large)
+    fe   = _font(96)
+    etxt = fest["emoji"]
+    try:
+        ew = draw.textbbox((0, 0), etxt, font=fe)[2]
+        draw.text(((SIZE - ew) // 2, CY), etxt, font=fe, fill=WHITE)
+        CY += 108
+    except Exception:
+        CY += 20
+
+    # Greeting line1 (white) + line2 (accent)
+    fg = _font(74)
+    for txt, fill in [(fest["line1"], WHITE), (fest["line2"], accent)]:
+        tw = draw.textbbox((0, 0), txt, font=fg)[2]
+        draw.text(((SIZE - tw) // 2, CY), txt, font=fg, fill=fill)
+        CY += draw.textbbox((0, 0), txt, font=fg)[3] + 4
+    CY += 10
+
+    # Tagline
+    for line in fest["tagline"].split("\n"):
+        line = line.strip()
+        if not line:
+            continue
+        ft = _font(22, False)
+        tw = draw.textbbox((0, 0), line, font=ft)[2]
+        draw.text(((SIZE - tw) // 2, CY), line, font=ft,
+                  fill=(*WHITE, 170))
+        CY += 32
+
+    # Footer
+    FOOT_H = 110
+    draw.rectangle([0, SIZE - FOOT_H, SIZE, SIZE], fill=(0, 0, 0))
+    draw.rectangle([0, SIZE - FOOT_H, SIZE, SIZE - FOOT_H + 2], fill=accent)
+
+    info = f"{BRAND_WEB}   |   {BRAND_PHONE}"
+    iw   = draw.textbbox((0, 0), info, font=_font(20, False))[2]
+    draw.text(((SIZE - iw) // 2, SIZE - FOOT_H + (FOOT_H - 24) // 2),
+              info, font=_font(20, False), fill=(160, 180, 220))
 
     return img
 
