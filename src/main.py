@@ -17,6 +17,8 @@ from social import post_to_all, post_reel
 from informative_post import generate_informative_image, build_caption
 from informative_topics import TOPICS
 from reel_maker import generate_reel
+from festival_calendar import get_today_festival
+from festival_post import generate_festival_post, build_festival_caption
 
 POSTS_PER_RUN    = int(os.environ.get("POSTS_PER_RUN", "1"))
 INFORMATIVE_RATIO = float(os.environ.get("INFORMATIVE_RATIO", "0.4"))
@@ -41,6 +43,22 @@ def run():
     print("[START] David Web Solution Social Poster")
     success = 0
     errors  = []
+
+    # ── Festival check: if today (or tomorrow) is a festival, post it first ──
+    festival = get_today_festival()
+    if festival:
+        print(f"\n[FESTIVAL] {festival['name']} detected — posting festival greeting")
+        try:
+            img_bytes = generate_festival_post(festival)
+            caption   = build_festival_caption(festival)
+            image_url = upload_to_imgbb(img_bytes, f"dws-festival-{festival['name'].replace(' ','-')}.jpg")
+            results   = post_to_all(caption, image_url)
+            if results.get("facebook") or results.get("instagram"):
+                success += 1
+                print(f"[FESTIVAL] Posted. FB={results['facebook']} IG={results['instagram']}")
+        except Exception as e:
+            print(f"[FESTIVAL] Error: {e}")
+        time.sleep(8)
 
     for i in range(POSTS_PER_RUN):
         print(f"\n[POST {i+1}/{POSTS_PER_RUN}]")
