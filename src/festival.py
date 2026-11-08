@@ -29,6 +29,9 @@ _VARIABLE = {
     (2027, 10, 20): ("DUSSEHRA", "HAPPY DUSSEHRA",     "🏹", "Happy",  "Dussehra!", "Victory of good over evil. Build your digital\npresence right — David Web Solution."),
     # Navratri start
     (2026,  9, 24): ("NAVRATRI", "HAPPY NAVRATRI",     "🪔", "Happy",  "Navratri!", "Nine nights of celebration & new beginnings.\nGrow your brand — David Web Solution."),
+    # Chhath Puja
+    (2026, 11,  8): ("CHHATH",   "HAPPY CHHATH PUJA",  "🌅", "Happy",  "Chhath Puja!", "Celebrating the festival of the Sun God.\nBlessings & prosperity — David Web Solution."),
+    (2027, 10, 28): ("CHHATH",   "HAPPY CHHATH PUJA",  "🌅", "Happy",  "Chhath Puja!", "Celebrating the festival of the Sun God.\nBlessings & prosperity — David Web Solution."),
 }
 
 # Background colors per festival key (bg1, bg2, accent RGB)
@@ -42,6 +45,7 @@ FESTIVAL_COLORS = {
     "EID":          (( 3, 18,  8), ( 0, 26, 10), ( 74, 222, 128)),
     "DUSSEHRA":     ((30, 10,  0), (50, 15,  0), (255, 165,   0)),
     "NAVRATRI":     ((40,  0, 40), (20,  0, 20), (255, 100, 200)),
+    "CHHATH":       ((20,  8,  0), (40, 15,  0), (255, 165,   0)),
 }
 
 
@@ -91,6 +95,7 @@ def build_festival_caption(fest: dict) -> str:
         "EID":           "Eid Mubarak from David Web Solution! 🌙",
         "DUSSEHRA":      "Happy Dussehra from David Web Solution! 🏹",
         "NAVRATRI":      "Happy Navratri from David Web Solution! 🪔",
+        "CHHATH":        "Happy Chhath Puja from David Web Solution! 🌅",
     }
     main_line = cta_map.get(fest["key"], f"{fest['line1']} {fest['line2']} from David Web Solution!")
     return (
