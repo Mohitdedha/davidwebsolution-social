@@ -525,6 +525,87 @@ def _make_generic(festival):
     return img.convert("RGB")
 
 
+def _make_chhath(festival):
+    c   = THEME_COLORS.get("chhath", {"bg":(20,8,0),"accent":(255,140,0),"accent2":(255,220,80),"text":(255,240,210)})
+    ac, ac2, txt = c["accent"], c["accent2"], c["text"]
+
+    img  = Image.new("RGB",(SIZE,SIZE),c["bg"])
+    img  = _radial_glow(img,SIZE//2,SIZE-200,600,(120,50,0),70)
+    img  = _radial_glow(img,SIZE//2,SIZE-200,350,ac,45)
+    draw = ImageDraw.Draw(img,"RGBA")
+
+    # Horizon water reflection
+    for i in range(12):
+        y = SIZE-180 + i*8
+        alpha = max(10, 60 - i*5)
+        draw.rectangle([0, y, SIZE, y+4], fill=(*ac2, alpha))
+
+    # Sun rising from horizon
+    sun_cx, sun_cy = SIZE//2, SIZE-160
+    for r,col,a in [(110,ac,18),(80,ac,35),(55,ac2,70),(38,ac2,130),(22,(255,255,200),200)]:
+        draw.ellipse([sun_cx-r,sun_cy-r,sun_cx+r,sun_cy+r], fill=(*col,a))
+    draw.ellipse([sun_cx-18,sun_cy-18,sun_cx+18,sun_cy+18], fill=(255,255,220))
+
+    # Sun rays
+    for i in range(16):
+        a = math.radians(360/16*i)
+        r1,r2 = 26, 55
+        draw.line([(sun_cx+int(r1*math.cos(a)),sun_cy+int(r1*math.sin(a))),
+                   (sun_cx+int(r2*math.cos(a)),sun_cy+int(r2*math.sin(a)))],
+                  fill=(*ac2,120), width=2)
+
+    _bg_sparkles(draw,6,ac,ac2,16)
+    _border(draw,ac,ac2)
+    logo=_load_logo(); _draw_top_header(img,draw,logo,ac)
+    draw=ImageDraw.Draw(img,"RGBA")
+
+    y = Z_HEADER_END+18
+
+    f_pre=_font(40,False)
+    pre="Wishing You A"
+    pw=draw.textlength(pre,font=f_pre)
+    draw.text((SIZE//2-pw//2,y),pre,font=f_pre,fill=(*txt,175)); y+=54
+
+    f_hap=_font(96,True)
+    hw=draw.textlength("Happy",font=f_hap)
+    draw.text((SIZE//2-hw//2,y),"Happy",font=f_hap,fill=WHITE); y+=110
+
+    f_nm,fsz=_auto_fontsize(draw,"Chhath Puja",SIZE-80,[110,96,84],True)
+    nw=draw.textlength("Chhath Puja",font=f_nm)
+    for ox,oy in [(3,3),(-3,-3)]:
+        draw.text((SIZE//2-nw//2+ox,y+oy),"Chhath Puja",font=f_nm,fill=(*ac2,50))
+    draw.text((SIZE//2-nw//2,y),"Chhath Puja",font=f_nm,fill=ac); y+=fsz+14
+
+    draw.rectangle([SIZE//2-180,y,SIZE//2+180,y+4],fill=(*ac2,210)); y+=18
+
+    f_sub=_font(32,False)
+    sub=festival.get("sub","Festival of Sun & Nature")
+    sw=draw.textlength(sub,font=f_sub)
+    _draw_star5(draw,SIZE//2-sw//2-24,y+16,12,ac2)
+    _draw_star5(draw,SIZE//2+int(sw//2)+24+int(sw//2),y+16,12,ac2)
+    draw.text((SIZE//2-sw//2,y),sub,font=f_sub,fill=(*ac2,230)); y+=50
+
+    f_msg=_font(28,False)
+    msg=festival.get("msg","")
+    for ln in _wrap1(draw,msg,f_msg,SIZE-110)[:2]:
+        lw=draw.textlength(ln,font=f_msg)
+        if y+36>Z_TEXT_END: break
+        draw.text((SIZE//2-lw//2,y),ln,font=f_msg,fill=(*txt,170)); y+=40
+
+    # Icons: 3 small suns
+    for dx,sz in [(-200,32),(0,42),(200,32)]:
+        cx=SIZE//2+dx; cy=Z_ICON_MID
+        draw.ellipse([cx-sz,cy-sz,cx+sz,cy+sz],fill=(*ac2,200))
+        for i in range(8):
+            a=math.radians(45*i)
+            draw.line([(cx+int((sz+4)*math.cos(a)),cy+int((sz+4)*math.sin(a))),
+                       (cx+int((sz+16)*math.cos(a)),cy+int((sz+16)*math.sin(a)))],
+                      fill=(*ac,180),width=2)
+
+    _draw_footer(draw,ac)
+    return img.convert("RGB")
+
+
 # ── Public API ────────────────────────────────────────────────────────────────
 _RENDERERS = {
     "diwali":    _make_diwali,

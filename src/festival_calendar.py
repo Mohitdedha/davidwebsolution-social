@@ -11,7 +11,7 @@ FESTIVALS = {
     # ── Indian festivals ────────────────────────────────────────────────────
     "2026-11-08": {
         "name": "Diwali",
-        "sub": "Festival of Lights 🪔",
+        "sub": "Festival of Lights",
         "msg": "May this Diwali bring joy, prosperity & success",
         "theme": "diwali",
     },
@@ -135,6 +135,7 @@ THEME_COLORS = {
     "thanksgiving":     {"bg": (25,12,0),    "accent": (200,100,20), "accent2": (220,160,0),  "text": (255,235,200)},
     "easter":           {"bg": (10,20,35),   "accent": (160,220,100),"accent2": (255,180,220),"text": (255,255,255)},
     "eid":              {"bg": (5,20,10),    "accent": (0,160,80),   "accent2": (200,160,0),  "text": (220,255,230)},
+    "chhath":           {"bg": (20,8,0),     "accent": (255,140,0),  "accent2": (255,220,80), "text": (255,240,210)},
 }
 
 def get_today_festival(today: date | None = None) -> dict | None:
