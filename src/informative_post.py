@@ -16,23 +16,76 @@ DIM    = (74, 96, 144)
 PILL_BG = (26, 86, 219, 50)   # semi-transparent
 PILL_BORDER = (99, 152, 255, 70)
 
-# Hashtag pool — 5 trending per post
-_HASHTAG_POOL = [
-    # Global / evergreen
-    "#DigitalMarketing", "#WebDesign", "#SEO", "#MarketingTips", "#OnlineMarketing",
-    "#BusinessGrowth", "#SocialMediaMarketing", "#ContentMarketing", "#Entrepreneur",
-    "#WebDevelopment", "#GoogleAds", "#InstagramMarketing", "#Branding", "#LeadGeneration",
-    "#MarketingStrategy", "#StartupLife", "#DigitalAgency", "#AIMarketing",
-    # US focused
-    "#USBusiness", "#AmericanBusiness", "#SmallBusinessUSA", "#USMarketing", "#USEntrepreneur",
-    # UK focused
-    "#UKBusiness", "#UKMarketing", "#UKEntrepreneur", "#SmallBusinessUK", "#LondonBusiness",
-    # Global ecom / agency
-    "#EcommerceMarketing", "#GlobalBusiness", "#AgencyLife", "#GrowthHacking", "#ScaleUp",
-]
+# Topic-specific hashtag sets — 25 per post for maximum reach
+_TOPIC_HASHTAGS = {
+    "wordpress": [
+        "#WordPress", "#WordPressDeveloper", "#WordPressDesign", "#WordPressExpert",
+        "#WordPressWebsite", "#WPDeveloper", "#WordPressTheme", "#WordPressPlugin",
+        "#WebDesign", "#WebDevelopment", "#WebsiteDesign", "#WebsiteBuilder",
+        "#CMS", "#WebsiteTips", "#DigitalMarketing", "#OnlineMarketing",
+        "#SmallBusiness", "#BusinessGrowth", "#Entrepreneur", "#AgencyLife",
+        "#USBusiness", "#UKBusiness", "#WebAgency", "#DavidWebSolution", "#GrowYourBusiness",
+    ],
+    "seo": [
+        "#SEO", "#SEOExpert", "#SEOTips", "#SEOStrategy", "#SEOMarketing",
+        "#GoogleRanking", "#GoogleSEO", "#LocalSEO", "#SEOAgency", "#SearchEngineOptimization",
+        "#DigitalMarketing", "#ContentMarketing", "#OnlineMarketing", "#WebTraffic",
+        "#OrganicTraffic", "#KeywordResearch", "#BacklinkBuilding", "#TechnicalSEO",
+        "#RankHigherOnGoogle", "#SmallBusiness", "#USBusiness", "#UKBusiness",
+        "#MarketingTips", "#DavidWebSolution", "#GrowYourBusiness",
+    ],
+    "ai_video": [
+        "#AIVideo", "#AIMarketing", "#UGCContent", "#UGCAds", "#VideoMarketing",
+        "#AIContent", "#ContentCreator", "#ReelsMarketing", "#VideoContent",
+        "#ArtificialIntelligence", "#AITools", "#DigitalMarketing", "#SocialMediaMarketing",
+        "#InstagramReels", "#VideoAds", "#ContentStrategy", "#MarketingTips",
+        "#Entrepreneur", "#BusinessGrowth", "#SmallBusiness", "#USBusiness",
+        "#UKBusiness", "#AgencyLife", "#DavidWebSolution", "#FutureOfMarketing",
+    ],
+    "web_mistake": [
+        "#WebDesign", "#WebsiteTips", "#UXDesign", "#WebDevelopment", "#WebsiteDesign",
+        "#BadWebsite", "#WebsiteMistakes", "#WebsiteHelp", "#WebsiteOptimization",
+        "#ConversionOptimization", "#UserExperience", "#MobileDesign", "#WebsiteSpeed",
+        "#DigitalMarketing", "#OnlineMarketing", "#SmallBusiness", "#BusinessTips",
+        "#Entrepreneur", "#StartupLife", "#AgencyLife", "#USBusiness", "#UKBusiness",
+        "#WebAgency", "#DavidWebSolution", "#GrowYourBusiness",
+    ],
+    "client_result": [
+        "#ClientSuccess", "#CaseStudy", "#BusinessGrowth", "#ROI", "#MarketingResults",
+        "#DigitalMarketing", "#WebDesign", "#SEOResults", "#ClientWin", "#AgencyLife",
+        "#MarketingAgency", "#SuccessStory", "#BusinessSuccess", "#Entrepreneur",
+        "#SmallBusiness", "#StartupSuccess", "#OnlineMarketing", "#LeadGeneration",
+        "#SalesGrowth", "#RevenueGrowth", "#USBusiness", "#UKBusiness",
+        "#WebAgency", "#DavidWebSolution", "#ProvenResults",
+    ],
+    "tool": [
+        "#MarketingTools", "#DigitalTools", "#SEOTools", "#WebsiteTools", "#AITools",
+        "#MarketingTech", "#MarTech", "#DigitalMarketing", "#OnlineMarketing",
+        "#ProductivityTools", "#BusinessTools", "#Automation", "#GrowthHacking",
+        "#ContentMarketing", "#SocialMediaTools", "#EmailMarketing", "#Analytics",
+        "#Entrepreneur", "#SmallBusiness", "#AgencyLife", "#USBusiness", "#UKBusiness",
+        "#MarketingTips", "#DavidWebSolution", "#WorkSmarterNotHarder",
+    ],
+    "default": [
+        "#DigitalMarketing", "#WebDesign", "#SEO", "#OnlineMarketing", "#MarketingTips",
+        "#BusinessGrowth", "#SocialMediaMarketing", "#ContentMarketing", "#Entrepreneur",
+        "#WebDevelopment", "#GoogleAds", "#InstagramMarketing", "#Branding", "#LeadGeneration",
+        "#MarketingStrategy", "#StartupLife", "#AgencyLife", "#AIMarketing",
+        "#USBusiness", "#UKBusiness", "#SmallBusiness", "#GlobalBusiness",
+        "#WebAgency", "#DavidWebSolution", "#GrowYourBusiness",
+    ],
+}
 
-def _hashtags():
-    return " ".join(random.sample(_HASHTAG_POOL, 5))
+def _hashtags(eyebrow: str = "") -> str:
+    key = "default"
+    e = eyebrow.lower()
+    if "wordpress" in e or "wp" in e:          key = "wordpress"
+    elif "seo" in e:                            key = "seo"
+    elif "ai" in e or "video" in e or "ugc" in e: key = "ai_video"
+    elif "mistake" in e or "avoid" in e:        key = "web_mistake"
+    elif "client" in e or "result" in e:        key = "client_result"
+    elif "tool" in e or "spotlight" in e:       key = "tool"
+    return " ".join(_TOPIC_HASHTAGS[key])
 
 def _load_font(size, bold=False):
     dirs = [
@@ -337,5 +390,6 @@ def build_caption(topic: dict) -> str:
     for i, (title, desc) in enumerate(pills[:3], 1):
         lines.append(f"{i}. {title} — {desc}")
     lines.append(f"\n{cta}")
-    lines.append(_hashtags())
+    lines.append(f"\n📞 +91 82854 23939 | 🌐 davidwebsolution.com")
+    lines.append(_hashtags(eyebrow))
     return "\n".join(lines)
