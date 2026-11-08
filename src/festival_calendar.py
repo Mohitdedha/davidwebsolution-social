@@ -9,12 +9,6 @@ from datetime import date, timedelta
 # For recurring annual festivals (fixed date), add both years as needed.
 FESTIVALS = {
     # ── Indian festivals ────────────────────────────────────────────────────
-    "2026-11-08": {
-        "name": "Diwali",
-        "sub": "Festival of Lights",
-        "msg": "May this Diwali bring joy, prosperity & success",
-        "theme": "diwali",
-    },
     "2026-11-01": {
         "name": "Diwali",
         "sub": "Festival of Lights",
