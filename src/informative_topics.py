@@ -1,5 +1,5 @@
 """
-Pool of 30 informative post topics for David Web Solution.
+Pool of 60 informative post topics for David Web Solution.
 Each topic has: eyebrow, headline (3 lines), sub, 3 pills (title + desc), cta.
 """
 
@@ -171,7 +171,7 @@ TOPICS = [
     },
     {
         "eyebrow": "VIDEO MARKETING",
-        "headline": ["Why Video Content", "Gets 10x More", "Reach in 2025"],
+        "headline": ["Why Video Content", "Gets 10x More", "Reach Than Photos"],
         "sub": "If you're not posting video, you're losing to competitors who are.",
         "pills": [
             ("Reels Get 3x More Reach", "Instagram pushes Reels to non-followers. Feed posts stay in your bubble."),
@@ -299,7 +299,7 @@ TOPICS = [
             ("Share Your Journey, Not Just Tips", "Behind-the-scenes content gets 3x more engagement. Be real."),
             ("Have One Clear Niche", "The riches are in the niches. Be known for one thing."),
         ],
-        "cta": 'Build Your Personal Brand — DM "BRAND"',
+        "cta": 'Build Your Personal Brand — DM "PERSONAL"',
     },
     {
         "eyebrow": "ANALYTICS & DATA",
@@ -334,4 +334,339 @@ TOPICS = [
         ],
         "cta": 'Get Monthly Maintenance — DM "MAINTAIN"',
     },
+    # ── Trend topics (added Nov 2026) ───────────────────────────────────────
+    {
+        "eyebrow": "AI SEARCH VISIBILITY",
+        "headline": ["Is Your Business", "Invisible in", "AI Search?"],
+        "sub": "Buyers now ask ChatGPT and Gemini before they ask Google.",
+        "pills": [
+            ("AI Can't Find Clear Answers", "If your site doesn't state what you do plainly, AI skips you."),
+            ("No Proof Behind Your Claims", "AI tools quote brands with real reviews, numbers and case studies."),
+            ("Nobody Mentions Your Brand", "Mentions on other sites tell AI you're worth recommending."),
+        ],
+        "cta": 'FREE AI Visibility Check — DM "AISEO"',
+    },
+    {
+        "eyebrow": "GOOGLE AI OVERVIEWS",
+        "headline": ["AI Overviews Are", "Taking Your", "Website Clicks"],
+        "sub": "Google now answers first. The links come second.",
+        "pills": [
+            ("Answers Buried in Long Text", "Put the direct answer in the first two lines of every page."),
+            ("No Question-Style Headings", "Headings written as real questions are easier for AI to quote."),
+            ("Thin, Generic Content", "Overviews cite pages with original detail, not copied basics."),
+        ],
+        "cta": 'Get Cited by Google AI — DM "OVERVIEW"',
+    },
+    {
+        "eyebrow": "GEO EXPLAINED",
+        "headline": ["SEO Is Now GEO.", "Is Your Site", "Ready?"],
+        "sub": "Generative Engine Optimisation: getting AI to recommend you.",
+        "pills": [
+            ("Keywords Alone Don't Work", "AI looks for the most trustworthy source, not the most keywords."),
+            ("Be the Easiest Page to Quote", "Short answers, clear headings and real data get picked up."),
+            ("Keep the SEO Basics Strong", "Speed, structure and links still decide who AI trusts."),
+        ],
+        "cta": 'FREE GEO Audit — DM "GEO"',
+    },
+    {
+        "eyebrow": "ANSWER ENGINE SEO",
+        "headline": ["Write Answers,", "Not Just", "Keywords"],
+        "sub": "Search has turned into a conversation. Your content should too.",
+        "pills": [
+            ("Add an FAQ to Key Pages", "Real customer questions with short answers win AI results."),
+            ("Answer in the First Sentence", "Lead with the answer, then explain. Don't make people dig."),
+            ("Cover Price, Time and Process", "These are the questions buyers ask AI before they call you."),
+        ],
+        "cta": 'Make Your Site Answer-Ready — DM "ANSWER"',
+    },
+    {
+        "eyebrow": "SCHEMA MARKUP",
+        "headline": ["The Hidden Code", "That Gets You", "Cited by AI"],
+        "sub": "Structured data tells search engines exactly who you are.",
+        "pills": [
+            ("No Business Schema", "Name, service, area and hours should be machine-readable."),
+            ("No FAQ or Review Markup", "Marked-up FAQs and reviews are easier for AI to pull in."),
+            ("Never Tested It", "Broken schema is ignored. Test every page after each update."),
+        ],
+        "cta": 'FREE Schema Check — DM "SCHEMA"',
+    },
+    {
+        "eyebrow": "SOCIAL SEARCH",
+        "headline": ["Instagram Is the", "New Search", "Engine"],
+        "sub": "Younger buyers search on social before they open Google.",
+        "pills": [
+            ("Your Name Says Nothing", "Put what you do in your profile name so searches find you."),
+            ("Captions Without Keywords", "Write captions the way your customers actually search."),
+            ("No Searchable Content", "How-to and answer posts keep getting found for months."),
+        ],
+        "cta": 'Get Found on Social — DM "SEARCH"',
+    },
+    {
+        "eyebrow": "INSTAGRAM SEO",
+        "headline": ["3 Caption Fixes", "That Get You", "Found on IG"],
+        "sub": "Instagram reads your captions. Give it something to rank.",
+        "pills": [
+            ("Start With the Topic", "Say what the post is about in the first line, in plain words."),
+            ("Add Alt Text to Images", "Alt text tells Instagram what your post shows. Most skip it."),
+            ("Use Fewer, Sharper Hashtags", "A few specific tags beat a wall of generic ones."),
+        ],
+        "cta": 'FREE Instagram SEO Tips — DM "CAPTION"',
+    },
+    {
+        "eyebrow": "AI CONTENT QUALITY",
+        "headline": ["Why AI Content", "Is Hurting", "Your Brand"],
+        "sub": "People can spot lazy AI content, and they scroll past it.",
+        "pills": [
+            ("Sounds Like Everyone Else", "Unedited AI text has no voice. Add your own opinions and stories."),
+            ("No Real Examples", "Client results and real numbers are what AI can't fake."),
+            ("Published Without a Human Check", "Use AI for the first draft. A person should own the final one."),
+        ],
+        "cta": 'Content That Sounds Human — DM "HUMAN"',
+    },
+    {
+        "eyebrow": "AUTHENTIC MARKETING",
+        "headline": ["Why Raw Content", "Beats Polished", "Ads"],
+        "sub": "Overproduced ads are losing attention. Real is winning.",
+        "pills": [
+            ("Show the Work in Progress", "Behind-the-scenes clips build more trust than a perfect promo."),
+            ("Put a Real Person on Camera", "A face and a voice make a brand easier to believe."),
+            ("Share What Went Wrong Too", "Honest lessons get remembered. Perfect claims get ignored."),
+        ],
+        "cta": 'Build a Real Brand — DM "REAL"',
+    },
+    {
+        "eyebrow": "UGC TRUST",
+        "headline": ["UGC Is the New", "Word of", "Mouth"],
+        "sub": "Buyers trust other customers more than they trust your ads.",
+        "pills": [
+            ("You Never Ask for It", "Ask happy clients for a photo or a short video after delivery."),
+            ("Reviews Hidden on One Page", "Put customer content on product pages, ads and your homepage."),
+            ("No UGC in Your Ads", "Customer-style creative often beats studio creative on cost."),
+        ],
+        "cta": 'Get UGC for Your Brand — DM "PROOF"',
+    },
+    {
+        "eyebrow": "REELS STRATEGY",
+        "headline": ["Shares Matter", "More Than", "Views Now"],
+        "sub": "Instagram pushes the Reels people send to their friends.",
+        "pills": [
+            ("Make It Worth Sending", "Useful, funny or relatable. Ask: would someone forward this?"),
+            ("One Idea Per Reel", "A single clear point gets shared. Five points get skipped."),
+            ("End With a Reason to Share", "\"Send this to a business owner\" works better than \"follow us\"."),
+        ],
+        "cta": 'Reels That Get Shared — DM "REELS"',
+    },
+    {
+        "eyebrow": "MOBILE-FIRST DESIGN",
+        "headline": ["Built for Desktop?", "You're Losing", "Mobile Buyers"],
+        "sub": "Most visitors see your site on a phone first.",
+        "pills": [
+            ("Buttons Too Small to Tap", "If a thumb can't hit it easily, the visitor gives up."),
+            ("Tested Only on a Laptop", "Check your site on a real phone, on mobile data."),
+            ("Key Info Below Long Scrolls", "Phone, offer and CTA should show on the first screen."),
+        ],
+        "cta": 'FREE Mobile Site Review — DM "MOBILE"',
+    },
+    {
+        "eyebrow": "WEBSITE ACCESSIBILITY",
+        "headline": ["Is Your Website", "Shutting Out", "Customers?"],
+        "sub": "An accessible site is easier for everyone to use.",
+        "pills": [
+            ("Low-Contrast Text", "Light grey text on white is hard to read for most people."),
+            ("Images Without Alt Text", "Screen readers and search engines both depend on it."),
+            ("Forms You Can't Use by Keyboard", "If a form needs a mouse, some customers can't contact you."),
+        ],
+        "cta": 'FREE Accessibility Check — DM "ACCESS"',
+    },
+    {
+        "eyebrow": "AI CHATBOTS",
+        "headline": ["Your Website", "Should Answer", "at 2 AM"],
+        "sub": "Customers ask questions when you're offline.",
+        "pills": [
+            ("Enquiries Wait Until Morning", "By then the visitor has already messaged a competitor."),
+            ("Same Questions, Every Day", "Let a chatbot handle pricing, timing and booking basics."),
+            ("No Handover to a Human", "A good bot collects details and passes hot leads to you."),
+        ],
+        "cta": 'Add a Chatbot to Your Site — DM "CHATBOT"',
+    },
+    {
+        "eyebrow": "DM RESPONSE TIME",
+        "headline": ["Slow DM Replies", "Are Costing", "You Sales"],
+        "sub": "The first business to reply usually wins the customer.",
+        "pills": [
+            ("No Instant Reply Set Up", "An automatic first reply keeps the lead warm until you're free."),
+            ("No Saved Replies", "Save answers to common questions and reply in seconds."),
+            ("DMs Left on Seen", "Every unanswered DM is a buyer who went somewhere else."),
+        ],
+        "cta": 'Automate Your DMs — DM "DMS"',
+    },
+    {
+        "eyebrow": "WEBSITE PERSONALISATION",
+        "headline": ["One Website", "for Everyone", "Fits No One"],
+        "sub": "Visitors expect to see what's relevant to them.",
+        "pills": [
+            ("Same Page for Every Visitor", "Build separate pages for each service and each audience."),
+            ("Ads Lead to Generic Pages", "Match the landing page to the exact ad someone clicked."),
+            ("No Location Signals", "Show the city, currency and examples your visitor knows."),
+        ],
+        "cta": 'Personalise Your Website — DM "TAILOR"',
+    },
+    {
+        "eyebrow": "FIRST-PARTY DATA",
+        "headline": ["Stop Renting", "Your Audience.", "Own It."],
+        "sub": "Followers belong to the platform. Your list belongs to you.",
+        "pills": [
+            ("No Email List", "An algorithm change can cut your reach overnight. Email can't be."),
+            ("Nothing Offered for Sign-Ups", "Give a checklist, audit or discount in return for an email."),
+            ("Data Collected, Never Used", "Segment your list and send offers that match each group."),
+        ],
+        "cta": 'Build Your Own Audience — DM "DATA"',
+    },
+    {
+        "eyebrow": "EMAIL NEWSLETTERS",
+        "headline": ["The Newsletter", "Is Back.", "Are You In?"],
+        "sub": "A good newsletter reaches inboxes no algorithm can block.",
+        "pills": [
+            ("Only Sending Promotions", "Teach something in every issue. Sell in one line at the end."),
+            ("No Fixed Schedule", "Pick a day and keep it. Readers open what they expect."),
+            ("Written for Everyone", "Write to one type of customer about one problem they have."),
+        ],
+        "cta": 'Start Your Newsletter — DM "NEWSLETTER"',
+    },
+    {
+        "eyebrow": "LINKEDIN VIDEO",
+        "headline": ["LinkedIn Video", "Is Winning", "B2B Clients"],
+        "sub": "Decision-makers are watching short video on LinkedIn.",
+        "pills": [
+            ("Only Posting Text", "Short talking-head videos put a face to your expertise."),
+            ("Selling in Every Post", "Share one useful lesson per video. Trust comes before the pitch."),
+            ("No Subtitles", "Many people watch with sound off. Always add captions."),
+        ],
+        "cta": 'B2B Video Strategy — DM "LINKEDIN"',
+    },
+    {
+        "eyebrow": "ZERO-CLICK SEARCH",
+        "headline": ["No Click? You", "Can Still Win", "the Customer"],
+        "sub": "Many searches now end without a visit to any website.",
+        "pills": [
+            ("Weak Google Business Profile", "Photos, services and hours get seen without a single click."),
+            ("No Brand in the Answer", "Make sure your name shows up where the answer is shown."),
+            ("Measuring Only Traffic", "Track calls, messages and direction requests as well."),
+        ],
+        "cta": 'Win Zero-Click Searches — DM "ZERO"',
+    },
+    {
+        "eyebrow": "BRAND MENTIONS",
+        "headline": ["AI Recommends", "Brands People", "Talk About"],
+        "sub": "What others say about you now shapes search results.",
+        "pills": [
+            ("Not Listed Anywhere", "Get onto trusted directories and industry lists in your niche."),
+            ("No Press or Guest Features", "A quote in an article or podcast builds real authority."),
+            ("Different Details Everywhere", "Keep your name, address and services identical on every site."),
+        ],
+        "cta": 'Grow Your Brand Mentions — DM "MENTIONS"',
+    },
+    {
+        "eyebrow": "CORE WEB VITALS",
+        "headline": ["Google Grades", "Your Site on", "These 3 Things"],
+        "sub": "Loading, responsiveness and stability affect your rankings.",
+        "pills": [
+            ("Slow Main Content", "The biggest image or heading should appear almost instantly."),
+            ("Laggy Buttons and Menus", "Heavy scripts make taps feel broken. Cut what you don't need."),
+            ("Layout That Jumps Around", "Set image sizes so the page doesn't shift while loading."),
+        ],
+        "cta": 'FREE Core Web Vitals Report — DM "VITALS"',
+    },
+    {
+        "eyebrow": "AI AUTOMATION",
+        "headline": ["Small Team?", "Automate Like", "a Big One"],
+        "sub": "AI workflows let small businesses move at big-team speed.",
+        "pills": [
+            ("Doing Repeat Tasks by Hand", "Follow-ups, reports and reminders can run on their own."),
+            ("Leads Not Routed Anywhere", "Send every form and DM into one place automatically."),
+            ("No Written Process", "You can only automate what you've clearly written down."),
+        ],
+        "cta": 'Automate Your Marketing — DM "AUTOMATE"',
+    },
+    {
+        "eyebrow": "SHORT-FORM VIDEO",
+        "headline": ["3 Seconds to", "Hook or Get", "Scrolled Past"],
+        "sub": "The opening decides whether anyone watches the rest.",
+        "pills": [
+            ("Slow Intros", "Skip the logo and greeting. Open with the problem or result."),
+            ("No Text on Screen", "A bold opening line on screen stops the scroll."),
+            ("Too Long for One Idea", "Say one thing well and finish. Short videos get rewatched."),
+        ],
+        "cta": 'Better Video Hooks — DM "HOOK"',
+    },
+    {
+        "eyebrow": "COMMENT SELLING",
+        "headline": ["Your Comments", "Are a Sales", "Channel"],
+        "sub": "Buyers read the comments before they trust the post.",
+        "pills": [
+            ("Questions Left Unanswered", "A public answer helps everyone who had the same doubt."),
+            ("No Pinned Proof", "Pin a strong customer comment to the top of key posts."),
+            ("Replying Only With Emojis", "Reply with a real answer and a next step."),
+        ],
+        "cta": 'Turn Comments Into Clients — DM "COMMENTS"',
+    },
+    {
+        "eyebrow": "ONLINE REVIEWS",
+        "headline": ["AI Reads Your", "Reviews Before", "Customers Do"],
+        "sub": "Search tools summarise what people say about you.",
+        "pills": [
+            ("Too Few Recent Reviews", "Old reviews look like an inactive business. Ask every month."),
+            ("Reviews Without Detail", "Ask clients to mention the service and the result they got."),
+            ("Ignoring Negative Reviews", "A calm, helpful reply shows buyers how you handle problems."),
+        ],
+        "cta": 'Get More 5-Star Reviews — DM "REVIEWS"',
+    },
+    {
+        "eyebrow": "LANDING PAGES",
+        "headline": ["One Page,", "One Goal,", "More Leads"],
+        "sub": "A focused page converts better than a busy homepage.",
+        "pills": [
+            ("Too Many Choices", "Remove the menu and extra links. Leave one action to take."),
+            ("Headline Doesn't Match the Ad", "Repeat the promise that made them click."),
+            ("Proof Too Far Down", "Place a testimonial or result right next to the form."),
+        ],
+        "cta": 'Get a High-Converting Page — DM "LANDING"',
+    },
+    {
+        "eyebrow": "VOICE SEARCH",
+        "headline": ["People Now Ask,", "They Don't", "Type"],
+        "sub": "Spoken searches are longer and sound like real questions.",
+        "pills": [
+            ("Content Written in Jargon", "Write the way your customers speak, not the way you file reports."),
+            ("No \"Near Me\" Signals", "Keep your address, hours and service area up to date."),
+            ("Long, Rambling Answers", "Voice assistants read out short, direct answers."),
+        ],
+        "cta": 'Optimise for Voice Search — DM "VOICE"',
+    },
+    {
+        "eyebrow": "EXPERT TRUST SIGNALS",
+        "headline": ["Google Wants", "Proof You're", "the Expert"],
+        "sub": "Experience and trust now weigh heavily in search.",
+        "pills": [
+            ("No Author or Team Page", "Show who is behind the business and what they've done."),
+            ("No Case Studies", "Real projects with real outcomes prove your experience."),
+            ("Outdated Content", "Review key pages regularly so facts and prices stay correct."),
+        ],
+        "cta": 'Build Search Trust — DM "EXPERT"',
+    },
+    {
+        "eyebrow": "CREATOR PARTNERSHIPS",
+        "headline": ["Small Creators,", "Bigger", "Results"],
+        "sub": "Micro-creators often have the most engaged audiences.",
+        "pills": [
+            ("Chasing Follower Counts", "Pick creators whose audience matches your buyers."),
+            ("One-Off Posts Only", "A few posts over time build more trust than a single shoutout."),
+            ("Not Reusing the Content", "With permission, run creator videos as ads and on your site."),
+        ],
+        "cta": 'Plan a Creator Campaign — DM "CREATOR"',
+    },
 ]
+
+# Index where the Nov 2026 trend topics begin. Topics before this index were
+# already posted before the no-repeat system was added.
+TREND_TOPIC_START = 30
