@@ -249,6 +249,11 @@
    "key": "no click you can still win the customer",
    "eyebrow": "ZERO-CLICK SEARCH",
    "date": "2026-11-13"
+  },
+  {
+   "key": "ai recommends brands people talk about",
+   "eyebrow": "BRAND MENTIONS",
+   "date": "2026-11-13"
   }
  ]
 }
