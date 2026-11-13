@@ -254,6 +254,11 @@
    "key": "ai recommends brands people talk about",
    "eyebrow": "BRAND MENTIONS",
    "date": "2026-11-13"
+  },
+  {
+   "key": "google grades your site on these 3 things",
+   "eyebrow": "CORE WEB VITALS",
+   "date": "2026-11-13"
   }
  ]
 }
